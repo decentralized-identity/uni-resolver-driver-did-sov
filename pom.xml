@@ -20,7 +20,7 @@
   </scm>
 	<distributionManagement>
 		<repository>
-			<id>github</id>
+			<id>github-sov</id>
 			<name>GitHub decentralized-identity uni-resolver-driver-did-sov</name>
 			<url>https://maven.pkg.github.com/decentralized-identity/uni-resolver-driver-did-sov</url>
 		</repository>

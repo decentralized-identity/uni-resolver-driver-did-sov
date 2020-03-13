@@ -16,7 +16,7 @@ RUN apt-get -y update && \
 
 ADD . /opt/driver-did-sov
 
-RUN cd /opt/driver-did-sov && mvn clean install package -N -DskipTests
+RUN cd /opt/driver-did-sov && mvn --settings settings.xml clean install package -N -DskipTests
 
 # variables
 
