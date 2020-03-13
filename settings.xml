@@ -30,18 +30,18 @@
   <servers>
     <server>
       <id>github-ur</id>
-      <username>azuzi</username>
-      <password>0285a3e296f44e14d3a4d1504fa53a85e1b27c6a</password>
+      <username>TOKEN</username>
+      <password>TOKEN</password>
     </server>
     <server>
       <id>githubb-didcom</id>
-      <username>azuzi</username>
-      <password>0285a3e296f44e14d3a4d1504fa53a85e1b27c6a</password>
+      <username>TOKEN</username>
+      <password>TOKEN</password>
     </server>
     <server>
       <id>github-btcr</id>
-      <username>azuzi</username>
-      <password>0285a3e296f44e14d3a4d1504fa53a85e1b27c6a</password>
+      <username>TOKEN</username>
+      <password>TOKEN</password>
     </server>
   </servers>
 
