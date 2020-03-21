@@ -9,18 +9,13 @@
     <profile>
       <id>github</id>
       <repositories>
-	<repository>
+        <repository>
           <id>github-ur</id>
           <name>GitHub decentralized-identity uni-resolver</name>
           <url>https://maven.pkg.github.com/decentralized-identity/universal-resolver</url>
-        </repository>	
-	<repository>
-          <id>github-didcom</id>
-          <name>GitHub decentralized-identity did-common-java</name>
-          <url>https://maven.pkg.github.com/decentralized-identity/did-common-java</url>
         </repository>
-	<repository>
-          <id>github-btcr</id>
+        <repository>
+          <id>github-btcLookup</id>
           <name>GitHub WebOfTrustInfo btc-tx-lookup-java</name>
           <url>https://maven.pkg.github.com/WebOfTrustInfo/btc-tx-lookup-java</url>
         </repository>
@@ -34,12 +29,7 @@
       <password>TOKEN</password>
     </server>
     <server>
-      <id>githubb-didcom</id>
-      <username>TOKEN</username>
-      <password>TOKEN</password>
-    </server>
-    <server>
-      <id>github-btcr</id>
+      <id>github-btcLookup</id>
       <username>TOKEN</username>
       <password>TOKEN</password>
     </server>
