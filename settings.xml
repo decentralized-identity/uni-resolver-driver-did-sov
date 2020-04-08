@@ -11,7 +11,7 @@
       <repositories>
         <repository>
           <id>github-universal-resolver</id>
-          <name>GitHub decentralized-identity universal-resolver</name>
+          <name>GitHub decentralized-identity/universal-resolver</name>
           <url>https://maven.pkg.github.com/decentralized-identity/universal-resolver</url>
         </repository>
       </repositories>
