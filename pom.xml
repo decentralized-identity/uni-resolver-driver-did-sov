@@ -105,6 +105,7 @@
 			<groupId>decentralized-identity</groupId>
 			<artifactId>uni-resolver-driver</artifactId>
 			<version>0.1.0</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.hyperledger</groupId>
