@@ -12,10 +12,36 @@
 		<version>0.1.0</version>
 	</parent>
 
+	<scm>
+		<url>https://github.com/decentralized-identity/uni-resolver-driver-did-sov</url>
+		<connection>scm:git:git://github.com/decentralized-identity/uni-resolver-driver-did-sov.git</connection>
+		<developerConnection>scm:git:git@github.com:decentralized-identity/uni-resolver-driver-did-sov.git</developerConnection>
+	  <tag>HEAD</tag>
+  	</scm>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>danubetech-maven-snapshots</id>
+			<url>https://repo.danubetech.com/repository/maven-snapshots/</url>
+		</snapshotRepository>
+		<repository>
+			<id>danubetech-maven-releases</id>
+			<url>https://repo.danubetech.com/repository/maven-releases/</url>
+		</repository>
+	</distributionManagement>
+
 	<repositories>
 		<repository>
 			<id>sovrin</id>
 			<url>https://repo.sovrin.org/repository/maven-public</url>
+		</repository>
+		<repository>
+			<id>danubtech-maven-snapshots</id>
+			<url>https://repo.danubetech.com/repository/maven-snapshots/</url>
+		</repository>
+		<repository>
+			<id>danubtech-maven-releases</id>
+			<url>https://repo.danubetech.com/repository/maven-releases/</url>
 		</repository>
 	</repositories>
 
