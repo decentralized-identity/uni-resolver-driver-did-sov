@@ -17,12 +17,16 @@
 		<connection>scm:git:git://github.com/decentralized-identity/uni-resolver-driver-did-sov.git</connection>
 		<developerConnection>scm:git:git@github.com:decentralized-identity/uni-resolver-driver-did-sov.git</developerConnection>
 	  <tag>HEAD</tag>
-  </scm>
+  	</scm>
+
 	<distributionManagement>
+		<snapshotRepository>
+			<id>danubetech-maven-snapshots</id>
+			<url>https://repo.danubetech.com/repository/maven-snapshots/</url>
+		</snapshotRepository>
 		<repository>
-			<id>github-sov</id>
-			<name>GitHub decentralized-identity uni-resolver-driver-did-sov</name>
-			<url>https://maven.pkg.github.com/decentralized-identity/uni-resolver-driver-did-sov</url>
+			<id>danubetech-maven-releases</id>
+			<url>https://repo.danubetech.com/repository/maven-releases/</url>
 		</repository>
 	</distributionManagement>
 
@@ -30,6 +34,14 @@
 		<repository>
 			<id>sovrin</id>
 			<url>https://repo.sovrin.org/repository/maven-public</url>
+		</repository>
+		<repository>
+			<id>danubtech-maven-snapshots</id>
+			<url>https://repo.danubetech.com/repository/maven-snapshots/</url>
+		</repository>
+		<repository>
+			<id>danubtech-maven-releases</id>
+			<url>https://repo.danubetech.com/repository/maven-releases/</url>
 		</repository>
 	</repositories>
 
