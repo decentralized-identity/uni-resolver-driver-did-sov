@@ -12,10 +12,6 @@ RUN apt-get -y update && \
     apt-get install -y libindy=1.14.0 && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-ARG GITHUB_READ_PACKAGES_OWNER
-ARG GITHUB_READ_PACKAGES_TOKEN
-ADD ./settings.xml /root/.m2/
-
 # build driver-did-sov
 
 ADD . /opt/driver-did-sov
