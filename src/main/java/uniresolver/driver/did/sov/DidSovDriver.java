@@ -1,16 +1,16 @@
 package uniresolver.driver.did.sov;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.URI;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import foundation.identity.did.Authentication;
+import foundation.identity.did.DIDDocument;
+import foundation.identity.did.Service;
+import foundation.identity.did.VerificationMethod;
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.LibIndy;
 import org.hyperledger.indy.sdk.did.Did;
@@ -32,10 +32,6 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import did.Authentication;
-import did.DIDDocument;
-import did.PublicKey;
-import did.Service;
 import io.leonard.Base58;
 import uniresolver.ResolutionException;
 import uniresolver.driver.Driver;
@@ -209,7 +205,7 @@ public class DidSovDriver implements Driver {
 
 		String did = identifier;
 
-		// DID DOCUMENT publicKeys
+		// DID DOCUMENT verificationMethods
 
 		JsonPrimitive jsonGetNymVerkey = jsonGetNymDataContent == null ? null : jsonGetNymDataContent.getAsJsonPrimitive("verkey");
 		String verkey = jsonGetNymVerkey == null ? null : jsonGetNymVerkey.getAsString();
@@ -217,15 +213,22 @@ public class DidSovDriver implements Driver {
 		String expandedVerkey = expandVerkey(did, verkey);
 
 		int keyNum = 0;
-		List<PublicKey> publicKeys;
+		List<VerificationMethod> verificationMethods;
 		List<Authentication> authentications;
 
-		String keyId = did + "#key-" + (++keyNum);
+		URI keyId = URI.create(did + "#key-" + (++keyNum));
 
-		PublicKey publicKey = PublicKey.build(keyId, DIDDOCUMENT_PUBLICKEY_TYPES, null, expandedVerkey, null, null);
-		publicKeys = Collections.singletonList(publicKey);
+		VerificationMethod verificationMethod = VerificationMethod.builder()
+				.id(keyId)
+				.types(Arrays.asList(DIDDOCUMENT_PUBLICKEY_TYPES))
+				.publicKeyBase58(expandedVerkey)
+				.build();
+		verificationMethods = Collections.singletonList(verificationMethod);
 
-		Authentication authentication = Authentication.build(null, DIDDOCUMENT_AUTHENTICATION_TYPES, keyId);
+		Authentication authentication = Authentication.builder()
+				.types(Arrays.asList(DIDDOCUMENT_AUTHENTICATION_TYPES))
+				.verificationMethod(keyId)
+				.build();
 		authentications = Collections.singletonList(authentication);
 
 		// DID DOCUMENT services
@@ -241,7 +244,10 @@ public class DidSovDriver implements Driver {
 				JsonPrimitive jsonGetAttrEndpointValue = jsonGetAttrEndpoint == null ? null : jsonGetAttrEndpoint.getAsJsonPrimitive(jsonService.getKey());
 				String value = jsonGetAttrEndpointValue == null ? null : jsonGetAttrEndpointValue.getAsString();
 
-				Service service = Service.build(jsonService.getKey(), value);
+				Service service = Service.builder()
+						.type(jsonService.getKey())
+						.serviceEndpoint(value)
+						.build();
 
 				services.add(service);
 			}
@@ -249,7 +255,12 @@ public class DidSovDriver implements Driver {
 
 		// create DID DOCUMENT
 
-		DIDDocument didDocument = DIDDocument.build(did, publicKeys, authentications, services);
+		DIDDocument didDocument = DIDDocument.builder()
+				.id(URI.create(did))
+				.verificationMethods(verificationMethods)
+				.authentications(authentications)
+				.services(services)
+				.build();
 
 		// create DRIVER METADATA
 
@@ -262,7 +273,7 @@ public class DidSovDriver implements Driver {
 
 		// create RESOLVE RESULT
 
-		ResolveResult resolveResult = ResolveResult.build(didDocument, null, DIDDocument.MIME_TYPE, null, methodMetadata);
+		ResolveResult resolveResult = ResolveResult.build(didDocument, null, DIDDocument.MIME_TYPE_JSON_LD, null, methodMetadata);
 
 		// done
 
