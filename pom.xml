@@ -93,26 +93,6 @@
 								<containerIncludeJarPattern>^$</containerIncludeJarPattern>
 							</webApp>
 						</configuration>
-						<dependencies>
-							<dependency>
-								<groupId>org.slf4j</groupId>
-								<artifactId>slf4j-api</artifactId>
-								<version>${slf4j.version}</version>
-								<scope>compile</scope>
-							</dependency>
-							<dependency>
-								<groupId>org.slf4j</groupId>
-								<artifactId>jcl-over-slf4j</artifactId>
-								<version>${slf4j.version}</version>
-								<scope>compile</scope>
-							</dependency>
-							<dependency>
-								<groupId>org.slf4j</groupId>
-								<artifactId>slf4j-log4j12</artifactId>
-								<version>${slf4j.version}</version>
-								<scope>compile</scope>
-							</dependency>
-						</dependencies>
 					</plugin>
 				</plugins>
 			</build>
@@ -149,6 +129,16 @@
 			<artifactId>base58</artifactId>
 			<version>${io.leonard-base58.version}</version>
 			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
