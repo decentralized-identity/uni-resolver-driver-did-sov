@@ -80,8 +80,8 @@
 									<value>true</value>
 								</systemProperty>
 								<systemProperty>
-									<name>log4j.configuration</name>
-									<value>file:${basedir}/src/test/resources/log4j.properties</value>
+									<name>log4j2.configurationFile</name>
+									<value>file:${basedir}/src/test/resources/log4j2-test.properties</value>
 								</systemProperty>
 							</systemProperties>
 							<webApp>
@@ -103,14 +103,18 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>decentralized-identity</groupId>
-			<artifactId>uni-resolver-driver</artifactId>
-			<scope>compile</scope>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>decentralized-identity</groupId>
-			<artifactId>uni-resolver-core</artifactId>
-			<scope>compile</scope>
+			<artifactId>uni-resolver-driver</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.hyperledger</groupId>
@@ -129,16 +133,6 @@
 			<artifactId>base58</artifactId>
 			<version>${io.leonard-base58.version}</version>
 			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>jcl-over-slf4j</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
