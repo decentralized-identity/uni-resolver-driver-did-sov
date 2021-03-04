@@ -7,10 +7,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import foundation.identity.did.Authentication;
-import foundation.identity.did.DIDDocument;
-import foundation.identity.did.Service;
-import foundation.identity.did.VerificationMethod;
+import foundation.identity.did.*;
+import foundation.identity.jsonld.JsonLDUtils;
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.LibIndy;
 import org.hyperledger.indy.sdk.did.Did;
@@ -43,8 +41,7 @@ public class DidSovDriver implements Driver {
 
 	public static final Pattern DID_SOV_PATTERN = Pattern.compile("^did:sov:(?:(\\w[-\\w]*(?::\\w[-\\w]*)*):)?([1-9A-HJ-NP-Za-km-z]{21,22})$");
 
-	public static final String[] DIDDOCUMENT_PUBLICKEY_TYPES = new String[] { "Ed25519VerificationKey2018" };
-	public static final String[] DIDDOCUMENT_AUTHENTICATION_TYPES = new String[] { "Ed25519SignatureAuthentication2018" };
+	public static final String[] DIDDOCUMENT_VERIFICATIONMETHOD_TYPES = new String[] { "Ed25519VerificationKey2018" };
 
 	private static final Gson gson = new Gson();
 
@@ -220,16 +217,10 @@ public class DidSovDriver implements Driver {
 
 		VerificationMethod verificationMethod = VerificationMethod.builder()
 				.id(keyId)
-				.types(Arrays.asList(DIDDOCUMENT_PUBLICKEY_TYPES))
+				.types(Arrays.asList(DIDDOCUMENT_VERIFICATIONMETHOD_TYPES))
 				.publicKeyBase58(expandedVerkey)
 				.build();
 		verificationMethods = Collections.singletonList(verificationMethod);
-
-		Authentication authentication = Authentication.builder()
-				.types(Arrays.asList(DIDDOCUMENT_AUTHENTICATION_TYPES))
-				.verificationMethod(keyId)
-				.build();
-		authentications = Collections.singletonList(authentication);
 
 		// DID DOCUMENT services
 
@@ -258,9 +249,11 @@ public class DidSovDriver implements Driver {
 		DIDDocument didDocument = DIDDocument.builder()
 				.id(URI.create(did))
 				.verificationMethods(verificationMethods)
-				.authentications(authentications)
 				.services(services)
 				.build();
+
+		JsonLDUtils.jsonLdAddAsJsonArray(didDocument, Authentication.DEFAULT_JSONLD_PREDICATE, verificationMethods);
+		JsonLDUtils.jsonLdAddAsJsonArray(didDocument, AssertionMethod.DEFAULT_JSONLD_PREDICATE, verificationMethods);
 
 		// create DRIVER METADATA
 
