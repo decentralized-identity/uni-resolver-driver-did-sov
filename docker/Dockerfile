@@ -14,11 +14,12 @@ ENV PATH $JAVA_HOME/bin:$PATH
 
 # install dependencies
 
-RUN apt-get -y update && \
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get -y update && \
     apt-get install -y --no-install-recommends software-properties-common gnupg && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 68DB5E88 && \
-    add-apt-repository "deb https://repo.sovrin.org/sdk/deb xenial stable" && \
-    apt-get install -y libindy=1.14.0 && \
+    add-apt-repository "deb https://repo.sovrin.org/sdk/deb bionic stable" && \
+    apt-get install -y libindy=1.16.0-bionic && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.1:get -DrepoUrl=https://repo.maven.apache.org/maven2 -Dartifact=org.eclipse.jetty:jetty-maven-plugin:9.4.18.v20190429

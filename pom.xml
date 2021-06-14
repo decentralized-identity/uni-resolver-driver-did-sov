@@ -34,8 +34,9 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>11</java.version>
+
+		<indy.version>1.16.0</indy.version>
 		<io.leonard-base58.version>0.0.2</io.leonard-base58.version>
-		<indy.version>1.14.0</indy.version>
 	</properties>
 
 	<profiles>
