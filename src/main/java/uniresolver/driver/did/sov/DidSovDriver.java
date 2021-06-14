@@ -114,7 +114,7 @@ public class DidSovDriver implements Driver {
 	}
 
 	@Override
-	public ResolveResult resolve(String identifier) throws ResolutionException {
+	public ResolveResult resolve(DID did, Map<String, Object> resolveOptions) throws ResolutionException {
 
 		// open pool
 
@@ -125,7 +125,7 @@ public class DidSovDriver implements Driver {
 
 		// parse identifier
 
-		Matcher matcher = DID_SOV_PATTERN.matcher(identifier);
+		Matcher matcher = DID_SOV_PATTERN.matcher(did.getDidString());
 		if (! matcher.matches()) return null;
 
 		String network = matcher.group(1);
@@ -198,20 +198,15 @@ public class DidSovDriver implements Driver {
 		JsonElement jsonGetAttrData = jsonGetAttrResult == null ? null : jsonGetAttrResult.get("data");
 		JsonObject jsonGetAttrDataContent = (jsonGetAttrData == null || jsonGetAttrData instanceof JsonNull) ? null : gson.fromJson(jsonGetAttrData.getAsString(), JsonObject.class);
 
-		// DID DOCUMENT did
-
-		String did = identifier;
-
 		// DID DOCUMENT verificationMethods
 
 		JsonPrimitive jsonGetNymVerkey = jsonGetNymDataContent == null ? null : jsonGetNymDataContent.getAsJsonPrimitive("verkey");
 		String verkey = jsonGetNymVerkey == null ? null : jsonGetNymVerkey.getAsString();
 
-		String expandedVerkey = expandVerkey(did, verkey);
+		String expandedVerkey = expandVerkey(did.getDidString(), verkey);
 
 		int keyNum = 0;
 		List<VerificationMethod> verificationMethods;
-		List<Authentication> authentications;
 
 		URI keyId = URI.create(did + "#key-" + (++keyNum));
 
@@ -247,26 +242,24 @@ public class DidSovDriver implements Driver {
 		// create DID DOCUMENT
 
 		DIDDocument didDocument = DIDDocument.builder()
-				.id(URI.create(did))
+				.id(did.toUri())
 				.verificationMethods(verificationMethods)
+				.authenticationVerificationMethods(verificationMethods)
+				.assertionMethodVerificationMethods(verificationMethods)
 				.services(services)
 				.build();
 
-		JsonLDUtils.jsonLdAddAsJsonArray(didDocument, Authentication.DEFAULT_JSONLD_PREDICATE, verificationMethods);
-		JsonLDUtils.jsonLdAddAsJsonArray(didDocument, AssertionMethod.DEFAULT_JSONLD_PREDICATE, verificationMethods);
+		// create DID DOCUMENT METADATA
 
-		// create DRIVER METADATA
-
-		Map<String, Object> methodMetadata = new LinkedHashMap<String, Object> ();
-		methodMetadata.put("network", network);
-		methodMetadata.put("poolVersion", poolVersion);
-		methodMetadata.put("nymResponse", gson.fromJson(jsonGetNymResponse, Map.class));
-		methodMetadata.put("nymResponse", gson.fromJson(jsonGetNymResponse, Map.class));
-		methodMetadata.put("attrResponse", gson.fromJson(jsonGetAttrResponse, Map.class));
+		Map<String, Object> didDocumentMetadata = new LinkedHashMap<String, Object> ();
+		didDocumentMetadata.put("network", network);
+		didDocumentMetadata.put("poolVersion", poolVersion);
+		didDocumentMetadata.put("nymResponse", gson.fromJson(jsonGetNymResponse, Map.class));
+		didDocumentMetadata.put("attrResponse", gson.fromJson(jsonGetAttrResponse, Map.class));
 
 		// create RESOLVE RESULT
 
-		ResolveResult resolveResult = ResolveResult.build(didDocument, null, DIDDocument.MIME_TYPE_JSON_LD, null, methodMetadata);
+		ResolveResult resolveResult = ResolveResult.build(null, didDocument, null, didDocumentMetadata);
 
 		// done
 
