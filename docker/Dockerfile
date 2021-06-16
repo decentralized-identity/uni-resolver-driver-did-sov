@@ -33,8 +33,8 @@ RUN cd /opt/driver-did-sov && mvn clean install package -N -DskipTests
 # variables
 
 ENV uniresolver_driver_did_sov_libIndyPath=
-ENV uniresolver_driver_did_sov_poolConfigs=_;./sovrin/mainnet.txn;staging;./sovrin/stagingnet.txn;builder;./sovrin/buildernet.txn;danube;./sovrin/danube.txn
-ENV uniresolver_driver_did_sov_poolVersions=_;2;staging;2;builder;2;danube;2
+ENV uniresolver_driver_did_sov_poolConfigs=_;./sovrin/mainnet.txn;staging;./sovrin/stagingnet.txn;builder;./sovrin/buildernet.txn;danube;./sovrin/danube.txn;idunion;./sovrin/idunion.txn
+ENV uniresolver_driver_did_sov_poolVersions=_;2;staging;2;builder;2;danube;2;idunion;2
 ENV uniresolver_driver_did_sov_walletName=default
 
 # done
