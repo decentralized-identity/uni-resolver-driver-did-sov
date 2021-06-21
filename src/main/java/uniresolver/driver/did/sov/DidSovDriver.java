@@ -272,7 +272,8 @@ public class DidSovDriver implements Driver {
 							.serviceEndpoint(value)
 							.build();
 					JsonLDUtils.jsonLdAddAll(service3, Map.of(
-							"routingKeys", List.of()
+							"routingKeys", List.of(),
+							"accept", List.of("didcomm/v2", "didcomm/aip2;env=rfc19")
 					));
 
 					services.add(service2);
