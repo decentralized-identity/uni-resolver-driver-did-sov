@@ -7,6 +7,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.goterl.lazysodium.LazySodiumJava;
+import com.goterl.lazysodium.SodiumJava;
 import foundation.identity.did.*;
 import foundation.identity.jsonld.JsonLDUtils;
 import org.hyperledger.indy.sdk.IndyException;
@@ -41,9 +43,16 @@ public class DidSovDriver implements Driver {
 
 	public static final Pattern DID_SOV_PATTERN = Pattern.compile("^did:sov:(?:(\\w[-\\w]*(?::\\w[-\\w]*)*):)?([1-9A-HJ-NP-Za-km-z]{21,22})$");
 
-	public static final String[] DIDDOCUMENT_VERIFICATIONMETHOD_TYPES = new String[] { "Ed25519VerificationKey2018" };
+	public static final List<URI> DIDDOCUMENT_CONTEXTS = List.of(
+		URI.create("https://w3id.org/security/suites/ed25519-2020/v1"),
+		URI.create("https://w3id.org/security/suites/x25519-2020/v1")
+	);
+
+	public static final String[] DIDDOCUMENT_VERIFICATIONMETHOD_KEY_TYPES = new String[] { "Ed25519VerificationKey2018" };
+	public static final String[] DIDDOCUMENT_VERIFICATIONMETHOD_KEY_AGREEMENT_TYPES = new String[] { "X25519KeyAgreementKey2019" };
 
 	private static final Gson gson = new Gson();
+	private static final LazySodiumJava lazySodium = new LazySodiumJava(new SodiumJava());
 
 	private Map<String, Object> properties;
 
@@ -203,19 +212,25 @@ public class DidSovDriver implements Driver {
 		JsonPrimitive jsonGetNymVerkey = jsonGetNymDataContent == null ? null : jsonGetNymDataContent.getAsJsonPrimitive("verkey");
 		String verkey = jsonGetNymVerkey == null ? null : jsonGetNymVerkey.getAsString();
 
-		String expandedVerkey = expandVerkey(did.getDidString(), verkey);
+		String ed25519Key = expandVerkey(did.getDidString(), verkey);
+		String x25519Key = ed25519Tox25519(ed25519Key);
 
-		int keyNum = 0;
-		List<VerificationMethod> verificationMethods;
+		List<VerificationMethod> verificationMethods = new ArrayList<>();
 
-		URI keyId = URI.create(did + "#key-" + (++keyNum));
-
-		VerificationMethod verificationMethod = VerificationMethod.builder()
-				.id(keyId)
-				.types(Arrays.asList(DIDDOCUMENT_VERIFICATIONMETHOD_TYPES))
-				.publicKeyBase58(expandedVerkey)
+		VerificationMethod verificationMethodKey = VerificationMethod.builder()
+				.id(URI.create(did + "#key-1"))
+				.types(Arrays.asList(DIDDOCUMENT_VERIFICATIONMETHOD_KEY_TYPES))
+				.publicKeyBase58(ed25519Key)
 				.build();
-		verificationMethods = Collections.singletonList(verificationMethod);
+
+		VerificationMethod verificationMethodKeyAgreement = VerificationMethod.builder()
+				.id(URI.create(did + "#key-agreement-1"))
+				.types(Arrays.asList(DIDDOCUMENT_VERIFICATIONMETHOD_KEY_AGREEMENT_TYPES))
+				.publicKeyBase58(x25519Key)
+				.build();
+
+		verificationMethods.add(verificationMethodKey);
+		verificationMethods.add(verificationMethodKeyAgreement);
 
 		// DID DOCUMENT services
 
@@ -236,16 +251,45 @@ public class DidSovDriver implements Driver {
 						.build();
 
 				services.add(service);
+
+				if ("endpoint".equals(service.getType())) {
+
+					Service service2 = Service.builder()
+							.id(URI.create(did + "#did-communication"))
+							.type("did-communication")
+							.serviceEndpoint(value)
+							.build();
+					JsonLDUtils.jsonLdAddAll(service2, Map.of(
+							"priority", 0,
+							"recipientKeys", List.of(JsonLDUtils.uriToString(verificationMethodKey.getId())),
+							"routingKeys", List.of(),
+							"accept", List.of("didcomm/aip2;env=rfc19")
+					));
+
+					Service service3 = Service.builder()
+							.id(URI.create(did + "#didcomm-1"))
+							.type("DIDComm")
+							.serviceEndpoint(value)
+							.build();
+					JsonLDUtils.jsonLdAddAll(service3, Map.of(
+							"routingKeys", List.of()
+					));
+
+					services.add(service2);
+					services.add(service3);
+				}
 			}
 		}
 
 		// create DID DOCUMENT
 
 		DIDDocument didDocument = DIDDocument.builder()
+				.contexts(DIDDOCUMENT_CONTEXTS)
 				.id(did.toUri())
 				.verificationMethods(verificationMethods)
-				.authenticationVerificationMethods(verificationMethods)
-				.assertionMethodVerificationMethods(verificationMethods)
+				.authenticationVerificationMethod(VerificationMethod.builder().id(verificationMethodKey.getId()).build())
+				.assertionMethodVerificationMethod(VerificationMethod.builder().id(verificationMethodKey.getId()).build())
+				.keyAgreementVerificationMethod(VerificationMethod.builder().id(verificationMethodKeyAgreement.getId()).build())
 				.services(services)
 				.build();
 
@@ -420,6 +464,14 @@ public class DidSovDriver implements Driver {
 		if (log.isInfoEnabled()) log.info("Expanded " + did + " and " + verkey + " to " + didVerkey);
 
 		return didVerkey;
+	}
+
+	private static String ed25519Tox25519(String ed25519Key) {
+
+		byte[] ed25519bytes = Base58.decode(ed25519Key);
+		byte[] x25519bytes = new byte[ed25519bytes.length];
+		lazySodium.convertPublicKeyEd25519ToCurve25519(x25519bytes, ed25519bytes);
+		return Base58.encode(x25519bytes);
 	}
 
 	/*

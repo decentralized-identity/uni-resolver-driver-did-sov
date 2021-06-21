@@ -135,6 +135,12 @@
 			<version>${io.leonard-base58.version}</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.goterl</groupId>
+			<artifactId>lazysodium-java</artifactId>
+			<version>5.0.1</version>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 
 </project>
