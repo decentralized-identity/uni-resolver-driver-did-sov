@@ -44,8 +44,8 @@ public class DidSovDriver implements Driver {
 	public static final Pattern DID_SOV_PATTERN = Pattern.compile("^did:sov:(?:(\\w[-\\w]*(?::\\w[-\\w]*)*):)?([1-9A-HJ-NP-Za-km-z]{21,22})$");
 
 	public static final List<URI> DIDDOCUMENT_CONTEXTS = List.of(
-		URI.create("https://w3id.org/security/suites/ed25519-2020/v1"),
-		URI.create("https://w3id.org/security/suites/x25519-2020/v1")
+		URI.create("https://w3id.org/security/suites/ed25519-2018/v1"),
+		URI.create("https://w3id.org/security/suites/x25519-2019/v1")
 	);
 
 	public static final String[] DIDDOCUMENT_VERIFICATIONMETHOD_KEY_TYPES = new String[] { "Ed25519VerificationKey2018" };
