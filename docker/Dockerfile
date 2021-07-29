@@ -21,7 +21,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 68DB5E88 && \
     add-apt-repository "deb https://repo.sovrin.org/sdk/deb bionic stable" && \
     apt-get -y update && \
-    apt-get install -y libindy=1.16.0-bionic procps && \
+    apt-get install -y libindy=1.16.0-bionic && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 USER jetty
