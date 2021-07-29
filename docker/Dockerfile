@@ -1,34 +1,30 @@
 # Dockerfile for universalresolver/driver-did-sov
 
-FROM ubuntu:18.04
+FROM maven:3-jdk-11 AS build
 MAINTAINER Markus Sabadello <markus@danubetech.com>
 
-USER root
+# build driver-did-sov
 
-RUN apt-get -y update && \
-    apt-get install -y --no-install-recommends openjdk-11-jdk-headless maven git && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+ADD . /opt/driver-did-sov
+RUN cd /opt/driver-did-sov && mvn clean install package -P war -N -DskipTests
 
-ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64/
-ENV PATH $JAVA_HOME/bin:$PATH
+FROM jetty:9.4-jre11
+MAINTAINER Markus Sabadello <markus@danubetech.com>
 
 # install dependencies
+
+USER root
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get -y update && \
     apt-get install -y --no-install-recommends software-properties-common gnupg && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 68DB5E88 && \
     add-apt-repository "deb https://repo.sovrin.org/sdk/deb bionic stable" && \
-    apt-get install -y libindy=1.16.0-bionic && \
+    apt-get -y update && \
+    apt-get install -y libindy=1.16.0-bionic procps && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.1:get -DrepoUrl=https://repo.maven.apache.org/maven2 -Dartifact=org.eclipse.jetty:jetty-maven-plugin:9.4.18.v20190429
-RUN mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.1:get -DrepoUrl=https://repo.maven.apache.org/maven2 -Dartifact=org.apache.maven.plugins:maven-war-plugin:3.2.2
-
-# build driver-did-sov
-
-ADD . /opt/driver-did-sov
-RUN cd /opt/driver-did-sov && mvn clean install package -N -DskipTests
+USER jetty
 
 # variables
 
@@ -37,9 +33,12 @@ ENV uniresolver_driver_did_sov_poolConfigs=_;./sovrin/mainnet.txn;staging;./sovr
 ENV uniresolver_driver_did_sov_poolVersions=_;2;staging;2;builder;2;danube;2;idu;2
 ENV uniresolver_driver_did_sov_walletName=default
 
+# copy from build stage
+
+COPY --from=build --chown=jetty /opt/driver-did-sov/target/*.war /var/lib/jetty/webapps/ROOT.war
+COPY --from=build --chown=jetty /opt/driver-did-sov/sovrin/ /var/lib/jetty/sovrin/
+
 # done
 
 EXPOSE 8080
-
-RUN chmod a+rx /opt/driver-did-sov/docker/run-driver-did-sov.sh
-CMD "/opt/driver-did-sov/docker/run-driver-did-sov.sh"
+CMD java -Djetty.http.port=8080 -jar /usr/local/jetty/start.jar
