@@ -37,6 +37,7 @@
 
 		<indy.version>1.16.0</indy.version>
 		<io.leonard-base58.version>0.0.2</io.leonard-base58.version>
+		<com.goterl-lazysodium-java.version>5.0.1</com.goterl-lazysodium-java.version>
 	</properties>
 
 	<profiles>
@@ -106,12 +107,10 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>jcl-over-slf4j</artifactId>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-slf4j-impl</artifactId>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>decentralized-identity</groupId>
@@ -138,7 +137,7 @@
 		<dependency>
 			<groupId>com.goterl</groupId>
 			<artifactId>lazysodium-java</artifactId>
-			<version>5.0.1</version>
+			<version>${com.goterl-lazysodium-java.version}</version>
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>
