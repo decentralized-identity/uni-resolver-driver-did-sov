@@ -1,4 +1,4 @@
-name: Docker build/deploy image to Danubetech Nexus
+name: Docker latest image
 
 on:
   push:
