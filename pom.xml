@@ -5,12 +5,12 @@
 	<artifactId>uni-resolver-driver-did-sov</artifactId>
 	<packaging>${packaging.type}</packaging>
 	<name>uni-resolver-driver-did-sov</name>
-	<version>0.3-SNAPSHOT</version>
+	<version>0.2.0</version>
 
 	<parent>
 		<groupId>decentralized-identity</groupId>
 		<artifactId>uni-resolver</artifactId>
-		<version>0.3-SNAPSHOT</version>
+		<version>0.4.0</version>
 	</parent>
 
 	<scm>
@@ -99,6 +99,36 @@
 				</plugins>
 			</build>
 
+		</profile>
+
+		<profile>
+			<id>ci</id>
+			<properties><packaging.type>jar</packaging.type></properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-enforcer-plugin</artifactId>
+						<version>3.0.0</version>
+						<executions>
+							<execution>
+								<id>enforce-no-snapshots</id>
+								<goals>
+									<goal>enforce</goal>
+								</goals>
+								<configuration>
+									<rules>
+										<requireReleaseDeps>
+											<message>No Snapshots Allowed!</message>
+										</requireReleaseDeps>
+									</rules>
+									<fail>true</fail>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
 		</profile>
 
 	</profiles>
