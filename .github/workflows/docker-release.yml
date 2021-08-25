@@ -65,9 +65,18 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
 
+  set-framework:
+    runs-on: ubuntu-latest
+    outputs:
+      framework: ${{ steps.set_framework.outputs.framework }}
+    steps:
+      - name: Set framework to output variable
+        id: set_framework
+        run: echo "::set-output name=framework::${{ env.GLOBAL_FRAMEWORK }}"
+
   validate-pom:
-    if: ${{ env.GLOBAL_FRAMEWORK }} == 'maven'
-    needs: [create-tag, set-version]
+    needs: [create-tag, set-version, set-framework]
+    if: ${{ needs.set-framework.outputs.framework }} == 'maven'
     runs-on: ubuntu-latest
     env:
       RELEASE_VERSION: ${{ needs.set-version.outputs.version }}
