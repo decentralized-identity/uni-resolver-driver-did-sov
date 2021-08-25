@@ -1,16 +1,14 @@
 package uniresolver.driver.did.sov;
 
-import java.io.File;
-import java.net.URI;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.google.gson.*;
 import com.goterl.lazysodium.LazySodiumJava;
 import com.goterl.lazysodium.SodiumJava;
-import foundation.identity.did.*;
+import foundation.identity.did.DID;
+import foundation.identity.did.DIDDocument;
+import foundation.identity.did.Service;
+import foundation.identity.did.VerificationMethod;
 import foundation.identity.jsonld.JsonLDUtils;
+import io.leonard.Base58;
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.LibIndy;
 import org.hyperledger.indy.sdk.did.Did;
@@ -25,17 +23,16 @@ import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.hyperledger.indy.sdk.wallet.WalletExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-
-import io.leonard.Base58;
 import uniresolver.ResolutionException;
 import uniresolver.driver.Driver;
-import uniresolver.result.ResolveResult;
+import uniresolver.result.ResolveDataModelResult;
+
+import java.io.File;
+import java.net.URI;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DidSovDriver implements Driver {
 
@@ -123,7 +120,7 @@ public class DidSovDriver implements Driver {
 	}
 
 	@Override
-	public ResolveResult resolve(DID did, Map<String, Object> resolveOptions) throws ResolutionException {
+	public ResolveDataModelResult resolve(DID did, Map<String, Object> resolveOptions) throws ResolutionException {
 
 		// open pool
 
@@ -304,11 +301,11 @@ public class DidSovDriver implements Driver {
 
 		// create RESOLVE RESULT
 
-		ResolveResult resolveResult = ResolveResult.build(null, didDocument, null, didDocumentMetadata);
+		ResolveDataModelResult resolveDataModelResult = ResolveDataModelResult.build(null, didDocument, didDocumentMetadata);
 
 		// done
 
-		return resolveResult;
+		return resolveDataModelResult;
 	}
 
 	@Override
