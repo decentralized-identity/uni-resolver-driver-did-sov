@@ -8,7 +8,7 @@ MAINTAINER Markus Sabadello <markus@danubetech.com>
 ADD . /opt/driver-did-sov
 RUN cd /opt/driver-did-sov && mvn clean install package -P war -N -DskipTests
 
-FROM jetty:9.4-jre11
+FROM jetty:9.4-jre11-slim
 MAINTAINER Markus Sabadello <markus@danubetech.com>
 
 # install dependencies
