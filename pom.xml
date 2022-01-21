@@ -37,7 +37,7 @@
 
 		<indy.version>1.16.0</indy.version>
 		<io.leonard-base58.version>0.0.2</io.leonard-base58.version>
-		<com.goterl-lazysodium-java.version>5.0.1</com.goterl-lazysodium-java.version>
+		<com.goterl-lazysodium-java.version>5.1.1</com.goterl-lazysodium-java.version>
 	</properties>
 
 	<profiles>
@@ -150,25 +150,21 @@
 			<groupId>org.hyperledger</groupId>
 			<artifactId>indy</artifactId>
 			<version>${indy.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>${gson.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.leonard</groupId>
 			<artifactId>base58</artifactId>
 			<version>${io.leonard-base58.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.goterl</groupId>
 			<artifactId>lazysodium-java</artifactId>
 			<version>${com.goterl-lazysodium-java.version}</version>
-			<scope>compile</scope>
 		</dependency>
 	</dependencies>
 
