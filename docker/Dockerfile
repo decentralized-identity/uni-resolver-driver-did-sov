@@ -29,8 +29,8 @@ USER jetty
 # variables
 
 ENV uniresolver_driver_did_sov_libIndyPath=
-ENV uniresolver_driver_did_sov_poolConfigs=_;./sovrin/_.txn;staging;./sovrin/staging.txn;builder;./sovrin/builder.txn;danube;./sovrin/danube.txn;idunion;./sovrin/idunion.txn;eesdi;./sovrin/eesdi.txn;indicio;./sovrin/indicio.txn;indicio:test;./sovrin/indicio-test.txn;indicio:demo;./sovrin/indicio-demo.txn;bbu;./sovrin/bbu.txn
-ENV uniresolver_driver_did_sov_poolVersions=_;2;staging;2;builder;2;danube;2;idunion;2;eesdi;2;indicio;2;indicio:test;2;indicio:demo;2;bbu;2
+ENV uniresolver_driver_did_sov_poolConfigs=_;./sovrin/_.txn;staging;./sovrin/staging.txn;builder;./sovrin/builder.txn;danube;./sovrin/danube.txn;idu;./sovrin/idu.txn;eesdi;./sovrin/eesdi.txn;indicio;./sovrin/indicio.txn;indicio:test;./sovrin/indicio-test.txn;indicio:demo;./sovrin/indicio-demo.txn;bbu;./sovrin/bbu.txn
+ENV uniresolver_driver_did_sov_poolVersions=_;2;staging;2;builder;2;danube;2;idu;2;eesdi;2;indicio;2;indicio:test;2;indicio:demo;2;bbu;2
 ENV uniresolver_driver_did_sov_walletName=default
 
 # copy from build stage
