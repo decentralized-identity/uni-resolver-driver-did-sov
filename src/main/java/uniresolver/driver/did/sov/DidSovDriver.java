@@ -8,26 +8,21 @@ import foundation.identity.did.DIDDocument;
 import foundation.identity.did.Service;
 import foundation.identity.did.VerificationMethod;
 import foundation.identity.jsonld.JsonLDUtils;
-import io.leonard.Base58;
 import org.hyperledger.indy.sdk.IndyException;
-import org.hyperledger.indy.sdk.LibIndy;
-import org.hyperledger.indy.sdk.did.Did;
-import org.hyperledger.indy.sdk.did.DidJSONParameters.CreateAndStoreMyDidJSONParameter;
-import org.hyperledger.indy.sdk.did.DidResults.CreateAndStoreMyDidResult;
 import org.hyperledger.indy.sdk.ledger.Ledger;
 import org.hyperledger.indy.sdk.pool.Pool;
-import org.hyperledger.indy.sdk.pool.PoolJSONParameters.CreatePoolLedgerConfigJSONParameter;
-import org.hyperledger.indy.sdk.pool.PoolJSONParameters.OpenPoolLedgerJSONParameter;
-import org.hyperledger.indy.sdk.pool.PoolLedgerConfigExistsException;
-import org.hyperledger.indy.sdk.wallet.Wallet;
-import org.hyperledger.indy.sdk.wallet.WalletExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uniresolver.ResolutionException;
 import uniresolver.driver.Driver;
+import uniresolver.driver.did.sov.libindy.IndyConnection;
+import uniresolver.driver.did.sov.libindy.IndyConnectionException;
+import uniresolver.driver.did.sov.libindy.IndyConnector;
+import uniresolver.driver.did.sov.libindy.LibIndyInitializer;
+import uniresolver.driver.did.sov.util.VerkeyUtil;
+import uniresolver.driver.did.sov.util.X25519Util;
 import uniresolver.result.ResolveDataModelResult;
 
-import java.io.File;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -53,15 +48,8 @@ public class DidSovDriver implements Driver {
 
 	private Map<String, Object> properties;
 
-	private String libIndyPath;
-	private String poolConfigs;
-	private String poolVersions;
-	private String walletName;
-
-	private Map<String, Pool> poolMap = null;
-	private Map<String, Integer> poolVersionMap = null;
-	private Wallet wallet = null;
-	private String submitterDid = null;
+	private LibIndyInitializer libIndyInitializer;
+	private IndyConnector indyConnector;
 
 	public DidSovDriver(Map<String, Object> properties) {
 
@@ -77,19 +65,23 @@ public class DidSovDriver implements Driver {
 
 		if (log.isDebugEnabled()) log.debug("Loading from environment: " + System.getenv());
 
-		Map<String, Object> properties = new HashMap<String, Object> ();
+		Map<String, Object> properties = new HashMap<> ();
 
 		try {
 
 			String env_libIndyPath = System.getenv("uniresolver_driver_did_sov_libIndyPath");
 			String env_poolConfigs = System.getenv("uniresolver_driver_did_sov_poolConfigs");
 			String env_poolVersions = System.getenv("uniresolver_driver_did_sov_poolVersions");
-			String env_walletName = System.getenv("uniresolver_driver_did_sov_walletName");
+			String env_walletNames = System.getenv("uniresolver_driver_did_sov_walletNames");
+			String env_submitterDidSeeds = System.getenv("uniresolver_driver_did_sov_submitterDidSeeds");
+			String env_genesisTimestamps = System.getenv("uniresolver_driver_did_sov_genesisTimestamps");
 
 			if (env_libIndyPath != null) properties.put("libIndyPath", env_libIndyPath);
 			if (env_poolConfigs != null) properties.put("poolConfigs", env_poolConfigs);
 			if (env_poolVersions != null) properties.put("poolVersions", env_poolVersions);
-			if (env_walletName != null) properties.put("walletName", env_walletName);
+			if (env_walletNames != null) properties.put("walletNames", env_walletNames);
+			if (env_submitterDidSeeds != null) properties.put("submitterDidSeeds", env_submitterDidSeeds);
+			if (env_genesisTimestamps != null) properties.put("genesisTimestamps", env_genesisTimestamps);
 		} catch (Exception ex) {
 
 			throw new IllegalArgumentException(ex.getMessage(), ex);
@@ -105,14 +97,22 @@ public class DidSovDriver implements Driver {
 		try {
 
 			String prop_libIndyPath = (String) this.getProperties().get("libIndyPath");
+
+			this.setLibIndyInitializer(new LibIndyInitializer(
+					prop_libIndyPath));
+
 			String prop_poolConfigs = (String) this.getProperties().get("poolConfigs");
 			String prop_poolVersions = (String) this.getProperties().get("poolVersions");
-			String prop_walletName = (String) this.getProperties().get("walletName");
+			String prop_walletNames = (String) this.getProperties().get("walletNames");
+			String prop_submitterDidSeeds = (String) this.getProperties().get("submitterDidSeeds");
+			String prop_genesisTimestamps = (String) this.getProperties().get("genesisTimestamps");
 
-			if (prop_libIndyPath != null) this.setLibIndyPath(prop_libIndyPath);
-			if (prop_poolConfigs != null) this.setPoolConfigs(prop_poolConfigs);
-			if (prop_poolVersions != null) this.setPoolVersions(prop_poolVersions);
-			if (prop_walletName != null) this.setWalletName(prop_walletName);
+			this.setIndyConnector(new IndyConnector(
+					prop_poolConfigs,
+					prop_poolVersions,
+					prop_walletNames,
+					prop_submitterDidSeeds,
+					prop_genesisTimestamps));
 		} catch (Exception ex) {
 
 			throw new IllegalArgumentException(ex.getMessage(), ex);
@@ -122,11 +122,22 @@ public class DidSovDriver implements Driver {
 	@Override
 	public ResolveDataModelResult resolve(DID did, Map<String, Object> resolveOptions) throws ResolutionException {
 
-		// open pool
+		// init
 
-		synchronized (this) {
+		if (!this.getLibIndyInitializer().isInitialized()) {
+			this.getLibIndyInitializer().initializeLibIndy();
+			if (log.isInfoEnabled()) log.info("Successfully initialized libindy.");
+		}
 
-			if (this.getPoolMap() == null || this.getPoolVersionMap() == null || this.getWallet() == null || this.getSubmitterDid() == null) this.openIndy();
+		// open indy connections
+
+		if (!this.getIndyConnector().isOpened()) {
+			try {
+				this.getIndyConnector().openIndyConnections(true, false);
+				if (log.isInfoEnabled()) log.info("Successfully opened Indy connections.");
+			} catch (IndyConnectionException ex) {
+				throw new ResolutionException("Cannot open Indy connections: " + ex.getMessage(), ex);
+			}
 		}
 
 		// parse identifier
@@ -138,15 +149,10 @@ public class DidSovDriver implements Driver {
 		String targetDid = matcher.group(2);
 		if (network == null || network.trim().isEmpty()) network = "_";
 
-		// find pool version
+		// find Indy connection
 
-		final Integer poolVersion = this.getPoolVersionMap().get(network);
-		if (poolVersion == null) throw new ResolutionException("No pool version for network: " + network);
-
-		// find pool
-
-		final Pool pool = this.getPoolMap().get(network);
-		if (pool == null) throw new ResolutionException("No pool for network: " + network);
+		IndyConnection indyConnection = this.getIndyConnector().getIndyConnections().get(network);
+		if (indyConnection == null) throw new ResolutionException("Unknown network: " + network);
 
 		// send GET_NYM request
 
@@ -154,12 +160,12 @@ public class DidSovDriver implements Driver {
 
 		try {
 
-			synchronized (this) {
+			synchronized(indyConnection) {
 
-				Pool.setProtocolVersion(poolVersion);
+				Pool.setProtocolVersion(indyConnection.getPoolVersion());
 
-				String getNymRequest = Ledger.buildGetNymRequest(this.getSubmitterDid(), targetDid).get();
-				getNymResponse = Ledger.signAndSubmitRequest(pool, this.getWallet(), this.getSubmitterDid(), getNymRequest).get();
+				String getNymRequest = Ledger.buildGetNymRequest(indyConnection.getSubmitterDid(), targetDid).get();
+				getNymResponse = Ledger.signAndSubmitRequest(indyConnection.getPool(), indyConnection.getWallet(), indyConnection.getSubmitterDid(), getNymRequest).get();
 			}
 		} catch (IndyException | InterruptedException | ExecutionException ex) {
 
@@ -183,12 +189,12 @@ public class DidSovDriver implements Driver {
 
 		try {
 
-			synchronized (this) {
+			synchronized(indyConnection) {
 
-				Pool.setProtocolVersion(poolVersion);
+				Pool.setProtocolVersion(indyConnection.getPoolVersion());
 
-				String getAttrRequest = Ledger.buildGetAttribRequest(this.getSubmitterDid(), targetDid, "endpoint", null, null).get();
-				getAttrResponse = Ledger.signAndSubmitRequest(pool, this.getWallet(), this.getSubmitterDid(), getAttrRequest).get();
+				String getAttrRequest = Ledger.buildGetAttribRequest(indyConnection.getSubmitterDid(), targetDid, "endpoint", null, null).get();
+				getAttrResponse = Ledger.signAndSubmitRequest(indyConnection.getPool(), indyConnection.getWallet(), indyConnection.getSubmitterDid(), getAttrRequest).get();
 			}
 		} catch (IndyException | InterruptedException | ExecutionException ex) {
 
@@ -209,8 +215,8 @@ public class DidSovDriver implements Driver {
 		JsonPrimitive jsonGetNymVerkey = jsonGetNymDataContent == null ? null : jsonGetNymDataContent.getAsJsonPrimitive("verkey");
 		String verkey = jsonGetNymVerkey == null ? null : jsonGetNymVerkey.getAsString();
 
-		String ed25519Key = expandVerkey(did.getDidString(), verkey);
-		String x25519Key = ed25519Tox25519(ed25519Key);
+		String ed25519Key = VerkeyUtil.getExpandedVerkey(did.getDidString(), verkey);
+		String x25519Key = X25519Util.ed25519Tox25519(ed25519Key);
 
 		List<VerificationMethod> verificationMethods = new ArrayList<>();
 
@@ -233,7 +239,7 @@ public class DidSovDriver implements Driver {
 
 		JsonObject jsonGetAttrEndpoint = jsonGetAttrDataContent == null ? null : jsonGetAttrDataContent.getAsJsonObject("endpoint");
 
-		List<Service> services = new ArrayList<Service> ();
+		List<Service> services = new ArrayList<> ();
 
 		if (jsonGetAttrEndpoint != null) {
 
@@ -293,9 +299,10 @@ public class DidSovDriver implements Driver {
 
 		// create DID DOCUMENT METADATA
 
-		Map<String, Object> didDocumentMetadata = new LinkedHashMap<String, Object> ();
-		didDocumentMetadata.put("network", network);
-		didDocumentMetadata.put("poolVersion", poolVersion);
+		Map<String, Object> didDocumentMetadata = new LinkedHashMap<> ();
+		didDocumentMetadata.put("network", indyConnection.getPoolConfigName());
+		didDocumentMetadata.put("poolVersion", indyConnection.getPoolVersion());
+		didDocumentMetadata.put("submitterDid", indyConnection.getSubmitterDid());
 		didDocumentMetadata.put("nymResponse", gson.fromJson(jsonGetNymResponse, Map.class));
 		didDocumentMetadata.put("attrResponse", gson.fromJson(jsonGetAttrResponse, Map.class));
 
@@ -314,256 +321,32 @@ public class DidSovDriver implements Driver {
 		return this.getProperties();
 	}
 
-	private void openIndy() throws ResolutionException {
-
-		// initialize libindy
-
-		if (this.getLibIndyPath() != null && ! this.getLibIndyPath().isEmpty()) {
-
-			if (log.isInfoEnabled()) log.info("Initializing libindy: " + this.getLibIndyPath() + " (" + new File(this.getLibIndyPath()).getAbsolutePath() + ")");
-			LibIndy.init(new File(this.getLibIndyPath()));
-		} else {
-
-			if (log.isInfoEnabled()) log.info("Initializing libindy.");
-			if (! LibIndy.isInitialized()) LibIndy.init();
-		}
-
-		// parse pool configs
-
-		String[] poolConfigStrings = this.getPoolConfigs().split(";");
-		Map<String, String> poolConfigStringMap = new HashMap<String, String> ();
-		for (int i=0; i<poolConfigStrings.length; i+=2) poolConfigStringMap.put(poolConfigStrings[i], poolConfigStrings[i+1]);
-
-		if (log.isInfoEnabled()) log.info("Pool config map: " + poolConfigStringMap);
-
-		// parse pool versions
-
-		String[] poolVersionStrings = this.getPoolVersions().split(";");
-		this.poolVersionMap = new HashMap<String, Integer> ();
-		for (int i=0; i<poolVersionStrings.length; i+=2) this.poolVersionMap.put(poolVersionStrings[i], Integer.parseInt(poolVersionStrings[i+1]));
-
-		if (log.isInfoEnabled()) log.info("Pool version map: " + this.poolVersionMap);
-
-		// create pool configs
-
-		for (Map.Entry<String, String> poolConfig : poolConfigStringMap.entrySet()) {
-
-			String poolConfigName = poolConfig.getKey();
-			String poolConfigFile = poolConfig.getValue();
-
-			try {
-
-				CreatePoolLedgerConfigJSONParameter createPoolLedgerConfigJSONParameter = new CreatePoolLedgerConfigJSONParameter(poolConfigFile);
-				Pool.createPoolLedgerConfig(poolConfigName, createPoolLedgerConfigJSONParameter.toJson()).get();
-				if (log.isInfoEnabled()) log.info("Pool config \"" + poolConfigName + "\" successfully created.");
-			} catch (IndyException | InterruptedException | ExecutionException ex) {
-
-				IndyException iex = null;
-				if (ex instanceof IndyException) iex = (IndyException) ex;
-				if (ex instanceof ExecutionException && ex.getCause() instanceof IndyException) iex = (IndyException) ex.getCause();
-				if (iex instanceof PoolLedgerConfigExistsException) {
-
-					if (log.isInfoEnabled()) log.info("Pool config \"" + poolConfigName + "\" has already been created.");
-				} else {
-
-					throw new ResolutionException("Cannot create pool config \"" + poolConfigName + "\": " + ex.getMessage(), ex);
-				}
-			}
-		}
-
-		// create wallet
-
-		try {
-
-			String walletConfig = "{ \"id\":\"" + this.getWalletName() + "\", \"storage_type\":\"" + "default" + "\"}";
-			String walletCredentials = "{ \"key\":\"key\" }";
-			Wallet.createWallet(walletConfig, walletCredentials).get();
-			if (log.isInfoEnabled()) log.info("Wallet \"" + this.getWalletName() + "\" successfully created.");
-		} catch (IndyException | InterruptedException | ExecutionException ex) {
-
-			IndyException iex = null;
-			if (ex instanceof IndyException) iex = (IndyException) ex;
-			if (ex instanceof ExecutionException && ex.getCause() instanceof IndyException) iex = (IndyException) ex.getCause();
-			if (iex instanceof WalletExistsException) {
-
-				if (log.isInfoEnabled()) log.info("Wallet \"" + this.getWalletName() + "\" has already been created.");
-			} else {
-
-				throw new ResolutionException("Cannot create wallet \"" + this.getWalletName() + "\": " + ex.getMessage(), ex);
-			}
-		}
-
-		// open wallet
-
-		try {
-
-			String walletConfig = "{ \"id\":\"" + this.getWalletName() + "\", \"storage_type\":\"" + "default" + "\"}";
-			String walletCredentials = "{ \"key\":\"key\" }";
-			this.wallet = Wallet.openWallet(walletConfig, walletCredentials).get();
-		} catch (IndyException | InterruptedException | ExecutionException ex) {
-
-			throw new ResolutionException("Cannot open wallet \"" + this.getWalletName() + "\": " + ex.getMessage(), ex);
-		}
-
-		// create submitter DID
-
-		try {
-
-			CreateAndStoreMyDidJSONParameter createAndStoreMyDidJSONParameterTrustee = new CreateAndStoreMyDidJSONParameter(null, null, null, null);
-			CreateAndStoreMyDidResult createAndStoreMyDidResultTrustee = Did.createAndStoreMyDid(this.getWallet(), createAndStoreMyDidJSONParameterTrustee.toJson()).get();
-			this.submitterDid = createAndStoreMyDidResultTrustee.getDid();
-		} catch (IndyException | InterruptedException | ExecutionException ex) {
-
-			throw new ResolutionException("Cannot create submitter DID: " + ex.getMessage(), ex);
-		}
-
-		if (log.isInfoEnabled()) log.info("Created submitter DID: " + this.submitterDid);
-
-		// open pools
-
-		this.poolMap = new HashMap<String, Pool> ();
-
-		for (String poolConfigName : poolConfigStringMap.keySet()) {
-
-			try {
-
-				Pool.setProtocolVersion(this.getPoolVersionMap().get(poolConfigName));
-
-				OpenPoolLedgerJSONParameter openPoolLedgerJSONParameter = new OpenPoolLedgerJSONParameter(null, null);
-				Pool pool = Pool.openPoolLedger(poolConfigName, openPoolLedgerJSONParameter.toJson()).get();
-
-				this.poolMap.put(poolConfigName, pool);
-			} catch (IndyException | InterruptedException | ExecutionException ex) {
-
-				if (log.isWarnEnabled()) log.warn("Cannot open pool \"" + poolConfigName + "\": " + ex.getMessage(), ex);
-				continue;
-			}
-		}
-
-		if (log.isInfoEnabled()) log.info("Opened " + this.poolMap.size() + " pools: " + this.poolMap.keySet());
-	}
-
-	/*
-	 * Helper methods
-	 */
-
-	private static String expandVerkey(String did, String verkey) {
-
-		if (verkey == null || ! did.startsWith("did:sov:") || ! verkey.startsWith("~")) return verkey;
-
-		byte[] didBytes = Base58.decode(did.substring(did.lastIndexOf(":") + 1));
-		byte[] verkeyBytes = Base58.decode(verkey.substring(1));
-
-		byte[] didVerkeyBytes = new byte[didBytes.length+verkeyBytes.length];
-		System.arraycopy(didBytes, 0, didVerkeyBytes, 0, 16);
-		System.arraycopy(verkeyBytes, 0, didVerkeyBytes, 16, 16);
-
-		String didVerkey = Base58.encode(didVerkeyBytes);
-		if (log.isInfoEnabled()) log.info("Expanded " + did + " and " + verkey + " to " + didVerkey);
-
-		return didVerkey;
-	}
-
-	private static String ed25519Tox25519(String ed25519Key) {
-
-		byte[] ed25519bytes = Base58.decode(ed25519Key);
-		byte[] x25519bytes = new byte[ed25519bytes.length];
-		lazySodium.convertPublicKeyEd25519ToCurve25519(x25519bytes, ed25519bytes);
-		return Base58.encode(x25519bytes);
-	}
-
 	/*
 	 * Getters and setters
 	 */
 
 	public Map<String, Object> getProperties() {
-
 		return this.properties;
 	}
 
 	public void setProperties(Map<String, Object> properties) {
-
 		this.properties = properties;
 		this.configureFromProperties();
 	}
 
-	public String getLibIndyPath() {
-
-		return this.libIndyPath;
+	public LibIndyInitializer getLibIndyInitializer() {
+		return libIndyInitializer;
 	}
 
-	public void setLibIndyPath(String libIndyPath) {
-
-		this.libIndyPath = libIndyPath;
+	public void setLibIndyInitializer(LibIndyInitializer libIndyInitializer) {
+		this.libIndyInitializer = libIndyInitializer;
 	}
 
-	public String getPoolConfigs() {
-
-		return this.poolConfigs;
+	public IndyConnector getIndyConnector() {
+		return indyConnector;
 	}
 
-	public void setPoolConfigs(String poolConfigs) {
-
-		this.poolConfigs = poolConfigs;
-	}
-
-	public String getPoolVersions() {
-
-		return this.poolVersions;
-	}
-
-	public void setPoolVersions(String poolVersions) {
-
-		this.poolVersions = poolVersions;
-	}
-
-	public String getWalletName() {
-
-		return this.walletName;
-	}
-
-	public void setWalletName(String walletName) {
-
-		this.walletName = walletName;
-	}
-
-	public Map<String, Pool> getPoolMap() {
-
-		return this.poolMap;
-	}
-
-	public void setPoolMap(Map<String, Pool> poolMap) {
-
-		this.poolMap = poolMap;
-	}
-
-	public Map<String, Integer> getPoolVersionMap() {
-
-		return this.poolVersionMap;
-	}
-
-	public void setPoolVersionMap(Map<String, Integer> poolVersionMap) {
-
-		this.poolVersionMap = poolVersionMap;
-	}
-
-	public Wallet getWallet() {
-
-		return this.wallet;
-	}
-
-	public void setWallet(Wallet wallet) {
-
-		this.wallet = wallet;
-	}
-
-	public String getSubmitterDid() {
-
-		return this.submitterDid;
-	}
-
-	public void setSubmitterDid(String submitterDid) {
-
-		this.submitterDid = submitterDid;
+	public void setIndyConnector(IndyConnector indyConnector) {
+		this.indyConnector = indyConnector;
 	}
 }

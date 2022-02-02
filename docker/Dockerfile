@@ -31,7 +31,8 @@ USER jetty
 ENV uniresolver_driver_did_sov_libIndyPath=
 ENV uniresolver_driver_did_sov_poolConfigs=_;./sovrin/_.txn;staging;./sovrin/staging.txn;builder;./sovrin/builder.txn;danube;./sovrin/danube.txn;idu;./sovrin/idu.txn;eesdi;./sovrin/eesdi.txn;indicio;./sovrin/indicio.txn;indicio:test;./sovrin/indicio-test.txn;indicio:demo;./sovrin/indicio-demo.txn;bbu;./sovrin/bbu.txn
 ENV uniresolver_driver_did_sov_poolVersions=_;2;staging;2;builder;2;danube;2;idu;2;eesdi;2;indicio;2;indicio:test;2;indicio:demo;2;bbu;2
-ENV uniresolver_driver_did_sov_walletName=default
+ENV uniresolver_driver_did_sov_walletNames=_;w1;staging;w2;builder;w3;danube;w4;idu;w5;eesdi;w6;indicio;w7;indicio:test;w8;indicio:demo;w9;bbu;w10
+ENV uniresolver_driver_did_sov_submitterDidSeeds=_;_;staging;_;builder;_;danube;_;idu;_;eesdi;_;indicio;_;indicio:test;_;indicio:demo;_;bbu;_
 
 # copy from build stage
 
