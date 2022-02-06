@@ -222,12 +222,14 @@ public class DidSovDriver implements Driver {
 
 		VerificationMethod verificationMethodKey = VerificationMethod.builder()
 				.id(URI.create(did + "#key-1"))
+				.controller(did.toString())
 				.types(Arrays.asList(DIDDOCUMENT_VERIFICATIONMETHOD_KEY_TYPES))
 				.publicKeyBase58(ed25519Key)
 				.build();
 
 		VerificationMethod verificationMethodKeyAgreement = VerificationMethod.builder()
 				.id(URI.create(did + "#key-agreement-1"))
+				.controller(did.toString())
 				.types(Arrays.asList(DIDDOCUMENT_VERIFICATIONMETHOD_KEY_AGREEMENT_TYPES))
 				.publicKeyBase58(x25519Key)
 				.build();
