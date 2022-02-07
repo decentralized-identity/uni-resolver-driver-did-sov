@@ -42,17 +42,22 @@ The driver recognizes the following environment variables:
 ### `uniresolver_driver_did_sov_poolConfigs`
 
  * Specifies a semi-colon-separated list of Indy network names and pool configuration files. The default network is `_`.
- * Default value: `_;./sovrin/mainnet.txn;staging;./sovrin/stagingnet.txn;builder;./sovrin/buildernet.txn;danube;./sovrin/danube.txn`
+ * Default value: `_;./sovrin/_.txn;staging;./sovrin/staging.txn;builder;./sovrin/builder.txn;danube;./sovrin/danube.txn;idu;./sovrin/idu.txn;eesdi;./sovrin/eesdi.txn;indicio;./sovrin/indicio.txn;indicio:test;./sovrin/indicio-test.txn;indicio:demo;./sovrin/indicio-demo.txn;bbu;./sovrin/bbu.txn`
 
 ### `uniresolver_driver_did_sov_poolVersions`
 
  * Specifies a semi-colon-separated list of Indy network names and pool protocol versions. The default network is `_`.
- * Default value: `_;2;staging;2;builder;2;danube;2`
+ * Default value: `_;2;staging;2;builder;2;danube;2;idu;2;eesdi;2;indicio;2;indicio:test;2;indicio:demo;2;bbu;2`
 
-### `uniresolver_driver_did_sov_walletName`
+### `uniresolver_driver_did_sov_walletNames`
 
- * Specifies the name of the Indy wallet.
- * Default value: `default`
+ * Specifies a semi-colon-separated list of Indy network names and wallet names. The default network is `_`.
+ * Default value: `_;w1;staging;w2;builder;w3;danube;w4;idu;w5;eesdi;w6;indicio;w7;indicio:test;w8;indicio:demo;w9;bbu;w10`
+
+### `uniresolver_driver_did_sov_submitterDidSeeds`
+
+* Specifies a semi-colon-separated list of Indy network names and seeds for submitter DIDs. The default network is `_`.
+* Default value: `_;_;staging;_;builder;_;danube;_;idu;_;eesdi;_;indicio;_;indicio:test;_;indicio:demo;_;bbu;_`
 
 ## Driver Metadata
 
