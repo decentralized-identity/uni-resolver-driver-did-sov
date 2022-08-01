@@ -149,7 +149,10 @@ public class DidSovDriver implements Driver {
 		// find Indy connection
 
 		IndyConnection indyConnection = this.getIndyConnector().getIndyConnections().get(network);
-		if (indyConnection == null) throw new ResolutionException("Unknown network: " + network);
+		if (indyConnection == null) {
+			if (log.isInfoEnabled()) log.info("Unknown network: " + network);
+			return null;
+		}
 
 		// send GET_NYM request
 
