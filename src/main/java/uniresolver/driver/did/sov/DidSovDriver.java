@@ -1,8 +1,10 @@
 package uniresolver.driver.did.sov;
 
+import com.danubetech.libindy.IndyConnection;
+import com.danubetech.libindy.IndyConnectionException;
+import com.danubetech.libindy.IndyConnector;
+import com.danubetech.libindy.LibIndyInitializer;
 import com.google.gson.*;
-import com.goterl.lazysodium.LazySodiumJava;
-import com.goterl.lazysodium.SodiumJava;
 import foundation.identity.did.DID;
 import foundation.identity.did.DIDDocument;
 import foundation.identity.did.Service;
@@ -15,10 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uniresolver.ResolutionException;
 import uniresolver.driver.Driver;
-import uniresolver.driver.did.sov.libindy.IndyConnection;
-import uniresolver.driver.did.sov.libindy.IndyConnectionException;
-import uniresolver.driver.did.sov.libindy.IndyConnector;
-import uniresolver.driver.did.sov.libindy.LibIndyInitializer;
 import uniresolver.driver.did.sov.util.VerkeyUtil;
 import uniresolver.driver.did.sov.util.X25519Util;
 import uniresolver.result.ResolveDataModelResult;
@@ -44,7 +42,6 @@ public class DidSovDriver implements Driver {
 	public static final String[] DIDDOCUMENT_VERIFICATIONMETHOD_KEY_AGREEMENT_TYPES = new String[] { "X25519KeyAgreementKey2019" };
 
 	private static final Gson gson = new Gson();
-	private static final LazySodiumJava lazySodium = new LazySodiumJava(new SodiumJava());
 
 	private Map<String, Object> properties;
 
