@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class DidSovDriver implements Driver {
 
@@ -186,8 +187,11 @@ public class DidSovDriver implements Driver {
 		JsonObject jsonGetNymResult = jsonGetNymResponse == null ? null : jsonGetNymResponse.getAsJsonObject("result");
 		JsonElement jsonGetNymData = jsonGetNymResult == null ? null : jsonGetNymResult.get("data");
 		JsonObject jsonGetNymDataContent = (jsonGetNymData == null || jsonGetNymData instanceof JsonNull) ? null : gson.fromJson(jsonGetNymData.getAsString(), JsonObject.class);
+		JsonPrimitive jsonGetNymDataContentVerkey = jsonGetNymDataContent == null ? null : jsonGetNymDataContent.getAsJsonPrimitive("verkey");
 
 		if (jsonGetNymDataContent == null) return null;
+
+		String verkey = jsonGetNymDataContentVerkey == null ? null : jsonGetNymDataContentVerkey.getAsString();
 
 		// send GET_ATTR request
 
@@ -215,11 +219,16 @@ public class DidSovDriver implements Driver {
 		JsonObject jsonGetAttrResult = jsonGetAttrResponse == null ? null : jsonGetAttrResponse.getAsJsonObject("result");
 		JsonElement jsonGetAttrData = jsonGetAttrResult == null ? null : jsonGetAttrResult.get("data");
 		JsonObject jsonGetAttrDataContent = (jsonGetAttrData == null || jsonGetAttrData instanceof JsonNull) ? null : gson.fromJson(jsonGetAttrData.getAsString(), JsonObject.class);
+		JsonObject jsonGetAttrDataContentEndpoint = jsonGetAttrDataContent == null ? null : jsonGetAttrDataContent.getAsJsonObject("endpoint");
+
+		Map<String, String> serviceEndpoints = jsonGetAttrDataContentEndpoint == null ?
+				Collections.emptyMap() :
+				jsonGetAttrDataContentEndpoint.entrySet()
+						.stream()
+						.map(x -> new AbstractMap.SimpleEntry<>(x.getKey(), jsonGetAttrDataContentEndpoint.getAsJsonPrimitive(x.getKey()) == null ? null : jsonGetAttrDataContentEndpoint.getAsJsonPrimitive(x.getKey()).getAsString()))
+						.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
 		// DID DOCUMENT verificationMethods
-
-		JsonPrimitive jsonGetNymVerkey = jsonGetNymDataContent == null ? null : jsonGetNymDataContent.getAsJsonPrimitive("verkey");
-		String verkey = jsonGetNymVerkey == null ? null : jsonGetNymVerkey.getAsString();
 
 		String ed25519Key = VerkeyUtil.getExpandedVerkey(did.getDidString(), verkey);
 		String x25519Key = X25519Util.ed25519Tox25519(ed25519Key);
@@ -245,51 +254,46 @@ public class DidSovDriver implements Driver {
 
 		// DID DOCUMENT services
 
-		JsonObject jsonGetAttrEndpoint = jsonGetAttrDataContent == null ? null : jsonGetAttrDataContent.getAsJsonObject("endpoint");
-
 		List<Service> services = new ArrayList<> ();
 
-		if (jsonGetAttrEndpoint != null) {
+		for (Map.Entry<String, String> serviceEndpoint : serviceEndpoints.entrySet()) {
 
-			for (Map.Entry<String, JsonElement> jsonService : jsonGetAttrEndpoint.entrySet()) {
+			String serviceEndpointType = serviceEndpoint.getKey();
+			String serviceEndpointUrl = serviceEndpoint.getValue();
 
-				JsonPrimitive jsonGetAttrEndpointValue = jsonGetAttrEndpoint == null ? null : jsonGetAttrEndpoint.getAsJsonPrimitive(jsonService.getKey());
-				String value = jsonGetAttrEndpointValue == null ? null : jsonGetAttrEndpointValue.getAsString();
+			Service service = Service.builder()
+					.type(serviceEndpointType)
+					.serviceEndpoint(serviceEndpointUrl)
+					.build();
 
-				Service service = Service.builder()
-						.type(jsonService.getKey())
-						.serviceEndpoint(value)
+			services.add(service);
+
+			if ("endpoint".equals(service.getType())) {
+
+				Service service2 = Service.builder()
+						.id(URI.create(did + "#did-communication"))
+						.type("did-communication")
+						.serviceEndpoint(serviceEndpointUrl)
 						.build();
+				JsonLDUtils.jsonLdAddAll(service2, Map.of(
+						"priority", 0,
+						"recipientKeys", List.of(JsonLDUtils.uriToString(verificationMethodKey.getId())),
+						"routingKeys", List.of(),
+						"accept", List.of("didcomm/aip2;env=rfc19")
+				));
 
-				services.add(service);
+				Service service3 = Service.builder()
+						.id(URI.create(did + "#didcomm-1"))
+						.type("DIDComm")
+						.serviceEndpoint(serviceEndpointUrl)
+						.build();
+				JsonLDUtils.jsonLdAddAll(service3, Map.of(
+						"routingKeys", List.of(),
+						"accept", List.of("didcomm/v2", "didcomm/aip2;env=rfc19")
+				));
 
-				if ("endpoint".equals(service.getType())) {
-
-					Service service2 = Service.builder()
-							.id(URI.create(did + "#did-communication"))
-							.type("did-communication")
-							.serviceEndpoint(value)
-							.build();
-					JsonLDUtils.jsonLdAddAll(service2, Map.of(
-							"priority", 0,
-							"recipientKeys", List.of(JsonLDUtils.uriToString(verificationMethodKey.getId())),
-							"routingKeys", List.of(),
-							"accept", List.of("didcomm/aip2;env=rfc19")
-					));
-
-					Service service3 = Service.builder()
-							.id(URI.create(did + "#didcomm-1"))
-							.type("DIDComm")
-							.serviceEndpoint(value)
-							.build();
-					JsonLDUtils.jsonLdAddAll(service3, Map.of(
-							"routingKeys", List.of(),
-							"accept", List.of("didcomm/v2", "didcomm/aip2;env=rfc19")
-					));
-
-					services.add(service2);
-					services.add(service3);
-				}
+				services.add(service2);
+				services.add(service3);
 			}
 		}
 
