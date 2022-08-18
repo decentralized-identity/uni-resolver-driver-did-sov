@@ -179,7 +179,7 @@ public class DidSovDriver implements Driver {
 			throw new ResolutionException("Cannot send GET_NYM request: " + ex.getMessage(), ex);
 		}
 
-		if (log.isInfoEnabled()) log.info("GET_NYM for " + targetDid + ": " + getNymResponse);
+		if (log.isDebugEnabled()) log.debug("GET_NYM for " + targetDid + ": " + getNymResponse);
 
 		// GET_NYM response data
 
@@ -187,11 +187,43 @@ public class DidSovDriver implements Driver {
 		JsonObject jsonGetNymResult = jsonGetNymResponse == null ? null : jsonGetNymResponse.getAsJsonObject("result");
 		JsonElement jsonGetNymData = jsonGetNymResult == null ? null : jsonGetNymResult.get("data");
 		JsonObject jsonGetNymDataContent = (jsonGetNymData == null || jsonGetNymData instanceof JsonNull) ? null : gson.fromJson(jsonGetNymData.getAsString(), JsonObject.class);
-		JsonPrimitive jsonGetNymDataContentVerkey = jsonGetNymDataContent == null ? null : jsonGetNymDataContent.getAsJsonPrimitive("verkey");
+		JsonElement jsonGetNymDataContentVerkey = jsonGetNymDataContent == null ? null : jsonGetNymDataContent.get("verkey");
+
+		String verkey = (jsonGetNymDataContentVerkey == null || jsonGetNymDataContentVerkey.isJsonNull()) ? null : jsonGetNymDataContentVerkey.getAsString();
+		if (log.isDebugEnabled()) log.debug("Verkey for " + targetDid + ": " + verkey);
+
+		// not found?
 
 		if (jsonGetNymDataContent == null) return null;
 
-		String verkey = jsonGetNymDataContentVerkey == null ? null : jsonGetNymDataContentVerkey.getAsString();
+		// deactivated?
+
+		if (verkey == null) {
+
+			// create DID DOCUMENT
+
+			DIDDocument didDocument = DIDDocument.builder()
+				.contexts(DIDDOCUMENT_CONTEXTS)
+				.id(did.toUri())
+				.build();
+
+			// create DID DOCUMENT METADATA
+
+			Map<String, Object> didDocumentMetadata = new LinkedHashMap<> ();
+			didDocumentMetadata.put("deactivated", Boolean.TRUE);
+			didDocumentMetadata.put("network", indyConnection.getPoolConfigName());
+			didDocumentMetadata.put("poolVersion", indyConnection.getPoolVersion());
+			didDocumentMetadata.put("submitterDid", indyConnection.getSubmitterDid());
+			didDocumentMetadata.put("nymResponse", gson.fromJson(jsonGetNymResponse, Map.class));
+
+			// create RESOLVE RESULT
+
+			ResolveDataModelResult resolveDataModelResult = ResolveDataModelResult.build(null, didDocument, didDocumentMetadata);
+
+			// done
+
+			return resolveDataModelResult;
+		}
 
 		// send GET_ATTR request
 
@@ -211,7 +243,7 @@ public class DidSovDriver implements Driver {
 			throw new ResolutionException("Cannot send GET_NYM request: " + ex.getMessage(), ex);
 		}
 
-		if (log.isInfoEnabled()) log.info("GET_ATTR for " + targetDid + ": " + getAttrResponse);
+		if (log.isDebugEnabled()) log.debug("GET_ATTR for " + targetDid + ": " + getAttrResponse);
 
 		// GET_ATTR response data
 
@@ -227,6 +259,7 @@ public class DidSovDriver implements Driver {
 						.stream()
 						.map(x -> new AbstractMap.SimpleEntry<>(x.getKey(), jsonGetAttrDataContentEndpoint.getAsJsonPrimitive(x.getKey()) == null ? null : jsonGetAttrDataContentEndpoint.getAsJsonPrimitive(x.getKey()).getAsString()))
 						.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+		if (log.isDebugEnabled()) log.debug("Service endpoints for " + targetDid + ": " + serviceEndpoints);
 
 		// DID DOCUMENT verificationMethods
 
