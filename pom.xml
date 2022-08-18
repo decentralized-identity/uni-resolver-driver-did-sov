@@ -5,7 +5,7 @@
 	<artifactId>uni-resolver-driver-did-sov</artifactId>
 	<packaging>${packaging.type}</packaging>
 	<name>uni-resolver-driver-did-sov</name>
-	<version>0.4-SNAPSHOT</version>
+	<version>0.5-SNAPSHOT</version>
 
 	<parent>
 		<groupId>decentralized-identity</groupId>
