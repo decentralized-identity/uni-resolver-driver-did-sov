@@ -37,7 +37,8 @@
 
 		<!-- Dependency Versions -->
 
-		<libindy-common-java.version>0.1-SNAPSHOT</libindy-common-java.version>
+		<libindy-common-java.version>0.1.0</libindy-common-java.version>
+
 		<io.leonard-base58.version>0.0.2</io.leonard-base58.version>
 		<com.goterl-lazysodium-java.version>5.1.1</com.goterl-lazysodium-java.version>
 	</properties>
