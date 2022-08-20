@@ -19,9 +19,10 @@ public class TransactionData {
     private String dest;
     private Long txnTime;
     private String verkey;
+    private String raw;
     private Map<String, Object> rawValue;
 
-    public TransactionData(String response, Map<String, Object> responseMap, boolean found, Long reqId, String seqNo, String type, String dest, Long txnTime, String verkey, Map<String, Object> rawValue) {
+    public TransactionData(String response, Map<String, Object> responseMap, boolean found, Long reqId, String seqNo, String type, String dest, Long txnTime, String verkey, String raw, Map<String, Object> rawValue) {
         this.response = response;
         this.responseMap = responseMap;
         this.found = found;
@@ -31,6 +32,7 @@ public class TransactionData {
         this.dest = dest;
         this.txnTime = txnTime;
         this.verkey = verkey;
+        this.raw = raw;
         this.rawValue = rawValue;
     }
 
@@ -56,12 +58,13 @@ public class TransactionData {
         String type = jsonGetTxnResultDataTxnType instanceof String ? (String) jsonGetTxnResultDataTxnType : null;
         String dest = jsonGetTxnResultDataTxnDataDest instanceof String ? (String) jsonGetTxnResultDataTxnDataDest : null;
         String verkey = jsonGetTxnResultDataTxnDataVerkey instanceof String ? (String) jsonGetTxnResultDataTxnDataVerkey : null;
+        String raw = jsonGetTxnResultRaw instanceof String ? (String) jsonGetTxnResultRaw : null;
         Map<String, Object> rawValue = jsonGetTxnResultDataRawValue instanceof Map ? (Map<String, Object>) jsonGetTxnResultDataRawValue : null;
         Long reqId = jsonGetTxnResultDataTxnMetadataReqid instanceof Number ? ((Number) jsonGetTxnResultDataTxnMetadataReqid).longValue() : null;
         String seqNo = jsonGetTxnResultDataTxnmetadataSeqno instanceof String ? (String) jsonGetTxnResultDataTxnmetadataSeqno : null;
         Long txnTime = jsonGetTxnResultDataTxnmetadataTxntime instanceof Number ? ((Number) jsonGetTxnResultDataTxnmetadataTxntime).longValue() : null;
 
-        return new TransactionData(getTxnResponse, getTxnResponseMap, found, reqId, seqNo, type, dest, txnTime, verkey, rawValue);
+        return new TransactionData(getTxnResponse, getTxnResponseMap, found, reqId, seqNo, type, dest, txnTime, verkey, raw, rawValue);
     }
 
     private static TransactionData fromGetNymResponse(String getNymResponse, Map getNymResponseMap) throws JsonProcessingException {
@@ -85,7 +88,7 @@ public class TransactionData {
         Long txnTime = jsonGetNymResultTxntime instanceof Number ? ((Number) jsonGetNymResultTxntime).longValue() : null;
         String verkey = jsonGetNymResultDataVerkey instanceof String ? (String) jsonGetNymResultDataVerkey : null;
 
-        return new TransactionData(getNymResponse, getNymResponseMap, found, reqId, seqNo, type, dest, txnTime, verkey, null);
+        return new TransactionData(getNymResponse, getNymResponseMap, found, reqId, seqNo, type, dest, txnTime, verkey, null, null);
     }
 
     private static TransactionData fromGetAttrResponse(String getAttrRespnse, Map getAttrResponseMap) throws JsonProcessingException {
@@ -108,9 +111,10 @@ public class TransactionData {
         String type = jsonGetAttrResultType instanceof String ? (String) jsonGetAttrResultType : null;
         String dest = jsonGetAttrResultDest instanceof String ? (String) jsonGetAttrResultDest : null;
         Long txnTime = jsonGetAttrResultTxntime instanceof Number ? ((Number) jsonGetAttrResultTxntime).longValue() : null;
+        String raw = jsonGetAttrResultRaw instanceof String ? (String) jsonGetAttrResultRaw : null;
         Map<String, Object> rawValue = jsonGetAttrResultDataRawValue instanceof Map ? (Map<String, Object>) jsonGetAttrResultDataRawValue : null;
 
-        return new TransactionData(getAttrRespnse, getAttrResponseMap, found, reqId, seqNo, type, dest, txnTime, null, rawValue);
+        return new TransactionData(getAttrRespnse, getAttrResponseMap, found, reqId, seqNo, type, dest, txnTime, null, raw, rawValue);
   }
 
     public static TransactionData fromGetTxnResponse(String getTxnResponse) {
@@ -184,7 +188,7 @@ public class TransactionData {
     }
 
     public boolean isCompleteForAttrib() {
-        return this.getRawValue() != null;
+        return this.getRaw() != null;
     }
 
     /*
@@ -261,6 +265,14 @@ public class TransactionData {
 
     public void setVerkey(String verkey) {
         this.verkey = verkey;
+    }
+
+    public String getRaw() {
+        return raw;
+    }
+
+    public void setRaw(String raw) {
+        this.raw = raw;
     }
 
     public Map<String, Object> getRawValue() {
