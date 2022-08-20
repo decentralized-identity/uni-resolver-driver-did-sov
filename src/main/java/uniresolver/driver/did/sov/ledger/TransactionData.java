@@ -287,7 +287,18 @@ public class TransactionData {
      * Object methods
      */
 
+    @Override
     public String toString() {
-        return this.response;
+        return "TransactionData{" +
+                "found=" + found +
+                ", reqId=" + reqId +
+                ", seqNo='" + seqNo + '\'' +
+                ", type='" + type + '\'' +
+                ", dest='" + dest + '\'' +
+                ", txnTime=" + txnTime +
+                ", verkey='" + verkey + '\'' +
+                ", raw='" + raw + '\'' +
+                ", rawValue=" + rawValue +
+                '}';
     }
 }
