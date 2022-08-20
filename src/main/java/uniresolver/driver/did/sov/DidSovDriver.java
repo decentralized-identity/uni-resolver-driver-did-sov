@@ -204,7 +204,7 @@ public class DidSovDriver implements Driver {
 			if (log.isInfoEnabled()) log.info("GET_ATTR for " + indyDid + ": " + getAttrResponse);
 		}
 
-		TransactionData attribTransactionData = TransactionData.fromGetAttrResponse(getAttrResponse);
+		TransactionData attribTransactionData = getAttrResponse == null ? null : TransactionData.fromGetAttrResponse(getAttrResponse);
 		if (log.isDebugEnabled()) log.debug("attribTransactionData: " + attribTransactionData);
 
 		// assemble DID document
