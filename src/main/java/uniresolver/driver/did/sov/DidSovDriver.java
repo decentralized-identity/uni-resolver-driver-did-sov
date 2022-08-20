@@ -4,12 +4,8 @@ import com.danubetech.libindy.IndyConnection;
 import com.danubetech.libindy.IndyConnectionException;
 import com.danubetech.libindy.IndyConnector;
 import com.danubetech.libindy.LibIndyInitializer;
-import com.google.gson.*;
 import foundation.identity.did.DID;
 import foundation.identity.did.DIDDocument;
-import foundation.identity.did.Service;
-import foundation.identity.did.VerificationMethod;
-import foundation.identity.jsonld.JsonLDUtils;
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.ledger.Ledger;
 import org.hyperledger.indy.sdk.pool.Pool;
@@ -17,32 +13,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uniresolver.ResolutionException;
 import uniresolver.driver.Driver;
-import uniresolver.driver.did.sov.util.VerkeyUtil;
-import uniresolver.driver.did.sov.util.X25519Util;
+import uniresolver.driver.did.sov.ledger.DidDocAssembler;
+import uniresolver.driver.did.sov.ledger.TransactionData;
 import uniresolver.result.ResolveDataModelResult;
 
 import java.net.URI;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class DidSovDriver implements Driver {
 
-	private static Logger log = LoggerFactory.getLogger(DidSovDriver.class);
+	private static final Logger log = LoggerFactory.getLogger(DidSovDriver.class);
 
 	public static final Pattern DID_SOV_PATTERN = Pattern.compile("^did:sov:(?:(\\w[-\\w]*(?::\\w[-\\w]*)*):)?([1-9A-HJ-NP-Za-km-z]{21,22})$");
 
 	public static final List<URI> DIDDOCUMENT_CONTEXTS = List.of(
-		URI.create("https://w3id.org/security/suites/ed25519-2018/v1"),
-		URI.create("https://w3id.org/security/suites/x25519-2019/v1")
+			URI.create("https://w3id.org/security/suites/ed25519-2018/v1"),
+			URI.create("https://w3id.org/security/suites/x25519-2019/v1")
 	);
-
-	public static final String[] DIDDOCUMENT_VERIFICATIONMETHOD_KEY_TYPES = new String[] { "Ed25519VerificationKey2018" };
-	public static final String[] DIDDOCUMENT_VERIFICATIONMETHOD_KEY_AGREEMENT_TYPES = new String[] { "X25519KeyAgreementKey2019" };
-
-	private static final Gson gson = new Gson();
 
 	private Map<String, Object> properties;
 
@@ -129,7 +122,7 @@ public class DidSovDriver implements Driver {
 
 		// open indy connections
 
-		if (!this.getIndyConnector().isOpened()) {
+		if (! this.getIndyConnector().isOpened()) {
 			try {
 				this.getIndyConnector().openIndyConnections(true, false);
 				if (log.isInfoEnabled()) log.info("Successfully opened Indy connections.");
@@ -144,7 +137,7 @@ public class DidSovDriver implements Driver {
 		if (! matcher.matches()) return null;
 
 		String network = matcher.group(1);
-		String targetDid = matcher.group(2);
+		String indyDid = matcher.group(2);
 		if (network == null || network.trim().isEmpty()) network = "_";
 
 		// find Indy connection
@@ -166,190 +159,72 @@ public class DidSovDriver implements Driver {
 		String getNymResponse;
 
 		try {
-
 			synchronized(indyConnection) {
-
 				Pool.setProtocolVersion(indyConnection.getPoolVersion());
-
-				String getNymRequest = Ledger.buildGetNymRequest(indyConnection.getSubmitterDid(), targetDid).get();
+				String getNymRequest = Ledger.buildGetNymRequest(indyConnection.getSubmitterDid(), indyDid).get();
 				getNymResponse = Ledger.signAndSubmitRequest(indyConnection.getPool(), indyConnection.getWallet(), indyConnection.getSubmitterDid(), getNymRequest).get();
 			}
 		} catch (IndyException | InterruptedException | ExecutionException ex) {
-
 			throw new ResolutionException("Cannot send GET_NYM request: " + ex.getMessage(), ex);
 		}
 
-		if (log.isDebugEnabled()) log.debug("GET_NYM for " + targetDid + ": " + getNymResponse);
+		if (log.isInfoEnabled()) log.info("GET_NYM for " + indyDid + ": " + getNymResponse);
 
-		// GET_NYM response data
-
-		JsonObject jsonGetNymResponse = gson.fromJson(getNymResponse, JsonObject.class);
-		JsonObject jsonGetNymResult = jsonGetNymResponse == null ? null : jsonGetNymResponse.getAsJsonObject("result");
-		JsonElement jsonGetNymData = jsonGetNymResult == null ? null : jsonGetNymResult.get("data");
-		JsonObject jsonGetNymDataContent = (jsonGetNymData == null || jsonGetNymData instanceof JsonNull) ? null : gson.fromJson(jsonGetNymData.getAsString(), JsonObject.class);
-		JsonElement jsonGetNymDataContentVerkey = jsonGetNymDataContent == null ? null : jsonGetNymDataContent.get("verkey");
-
-		String verkey = (jsonGetNymDataContentVerkey == null || jsonGetNymDataContentVerkey.isJsonNull()) ? null : jsonGetNymDataContentVerkey.getAsString();
-		if (log.isDebugEnabled()) log.debug("Verkey for " + targetDid + ": " + verkey);
+		TransactionData nymTransactionData = TransactionData.fromGetNymResponse(getNymResponse);
+		if (log.isDebugEnabled()) log.debug("nymTransactionData: " + nymTransactionData);
 
 		// not found?
 
-		if (jsonGetNymDataContent == null) return null;
-
-		// deactivated?
-
-		if (verkey == null) {
-
-			// create DID DOCUMENT
-
-			DIDDocument didDocument = DIDDocument.builder()
-				.contexts(DIDDOCUMENT_CONTEXTS)
-				.id(did.toUri())
-				.build();
-
-			// create DID DOCUMENT METADATA
-
-			Map<String, Object> didDocumentMetadata = new LinkedHashMap<> ();
-			didDocumentMetadata.put("deactivated", Boolean.TRUE);
-			didDocumentMetadata.put("network", indyConnection.getPoolConfigName());
-			didDocumentMetadata.put("poolVersion", indyConnection.getPoolVersion());
-			didDocumentMetadata.put("submitterDid", indyConnection.getSubmitterDid());
-			didDocumentMetadata.put("nymResponse", gson.fromJson(jsonGetNymResponse, Map.class));
-
-			// create RESOLVE RESULT
-
-			ResolveDataModelResult resolveDataModelResult = ResolveDataModelResult.build(null, didDocument, didDocumentMetadata);
-
-			// done
-
-			return resolveDataModelResult;
+		if (! nymTransactionData.isFound()) {
+			if (log.isInfoEnabled()) log.info("For indyDid " + indyDid + " on " + network + ": Not found. Keep watching.");
+			return null;
 		}
+
+		// determine if deactivated
+
+		boolean deactivated = nymTransactionData.getVerkey() == null;
+		if (log.isDebugEnabled()) log.debug("For indyDid " + indyDid + " on " + network + ": deactivated=" + deactivated);
 
 		// send GET_ATTR request
 
-		String getAttrResponse;
+		String getAttrResponse = null;
 
-		try {
+		if (! deactivated) {
 
-			synchronized(indyConnection) {
-
-				Pool.setProtocolVersion(indyConnection.getPoolVersion());
-
-				String getAttrRequest = Ledger.buildGetAttribRequest(indyConnection.getSubmitterDid(), targetDid, "endpoint", null, null).get();
-				getAttrResponse = Ledger.signAndSubmitRequest(indyConnection.getPool(), indyConnection.getWallet(), indyConnection.getSubmitterDid(), getAttrRequest).get();
+			try {
+				synchronized (indyConnection) {
+					Pool.setProtocolVersion(indyConnection.getPoolVersion());
+					String getAttrRequest = Ledger.buildGetAttribRequest(indyConnection.getSubmitterDid(), indyDid, "endpoint", null, null).get();
+					getAttrResponse = Ledger.signAndSubmitRequest(indyConnection.getPool(), indyConnection.getWallet(), indyConnection.getSubmitterDid(), getAttrRequest).get();
+				}
+			} catch (IndyException | InterruptedException | ExecutionException ex) {
+				throw new ResolutionException("Cannot send GET_ATTR request: " + ex.getMessage(), ex);
 			}
-		} catch (IndyException | InterruptedException | ExecutionException ex) {
 
-			throw new ResolutionException("Cannot send GET_NYM request: " + ex.getMessage(), ex);
+			if (log.isInfoEnabled()) log.info("GET_ATTR for " + indyDid + ": " + getAttrResponse);
 		}
 
-		if (log.isDebugEnabled()) log.debug("GET_ATTR for " + targetDid + ": " + getAttrResponse);
+		TransactionData attribTransactionData = TransactionData.fromGetAttrResponse(getAttrResponse);
+		if (log.isDebugEnabled()) log.debug("attribTransactionData: " + attribTransactionData);
 
-		// GET_ATTR response data
+		// assemble DID document
 
-		JsonObject jsonGetAttrResponse = gson.fromJson(getAttrResponse, JsonObject.class);
-		JsonObject jsonGetAttrResult = jsonGetAttrResponse == null ? null : jsonGetAttrResponse.getAsJsonObject("result");
-		JsonElement jsonGetAttrData = jsonGetAttrResult == null ? null : jsonGetAttrResult.get("data");
-		JsonObject jsonGetAttrDataContent = (jsonGetAttrData == null || jsonGetAttrData instanceof JsonNull) ? null : gson.fromJson(jsonGetAttrData.getAsString(), JsonObject.class);
-		JsonObject jsonGetAttrDataContentEndpoint = jsonGetAttrDataContent == null ? null : jsonGetAttrDataContent.getAsJsonObject("endpoint");
+		DIDDocument didDocument;
 
-		Map<String, String> serviceEndpoints = jsonGetAttrDataContentEndpoint == null ?
-				Collections.emptyMap() :
-				jsonGetAttrDataContentEndpoint.entrySet()
-						.stream()
-						.map(x -> new AbstractMap.SimpleEntry<>(x.getKey(), jsonGetAttrDataContentEndpoint.getAsJsonPrimitive(x.getKey()) == null ? null : jsonGetAttrDataContentEndpoint.getAsJsonPrimitive(x.getKey()).getAsString()))
-						.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-		if (log.isDebugEnabled()) log.debug("Service endpoints for " + targetDid + ": " + serviceEndpoints);
-
-		// DID DOCUMENT verificationMethods
-
-		String ed25519Key = VerkeyUtil.getExpandedVerkey(did.getDidString(), verkey);
-		String x25519Key = X25519Util.ed25519Tox25519(ed25519Key);
-
-		List<VerificationMethod> verificationMethods = new ArrayList<>();
-
-		VerificationMethod verificationMethodKey = VerificationMethod.builder()
-				.id(URI.create(did + "#key-1"))
-				.controller(did.toString())
-				.types(Arrays.asList(DIDDOCUMENT_VERIFICATIONMETHOD_KEY_TYPES))
-				.publicKeyBase58(ed25519Key)
-				.build();
-
-		VerificationMethod verificationMethodKeyAgreement = VerificationMethod.builder()
-				.id(URI.create(did + "#key-agreement-1"))
-				.controller(did.toString())
-				.types(Arrays.asList(DIDDOCUMENT_VERIFICATIONMETHOD_KEY_AGREEMENT_TYPES))
-				.publicKeyBase58(x25519Key)
-				.build();
-
-		verificationMethods.add(verificationMethodKey);
-		verificationMethods.add(verificationMethodKeyAgreement);
-
-		// DID DOCUMENT services
-
-		List<Service> services = new ArrayList<> ();
-
-		for (Map.Entry<String, String> serviceEndpoint : serviceEndpoints.entrySet()) {
-
-			String serviceEndpointType = serviceEndpoint.getKey();
-			String serviceEndpointUrl = serviceEndpoint.getValue();
-
-			Service service = Service.builder()
-					.type(serviceEndpointType)
-					.serviceEndpoint(serviceEndpointUrl)
-					.build();
-
-			services.add(service);
-
-			if ("endpoint".equals(service.getType())) {
-
-				Service service2 = Service.builder()
-						.id(URI.create(did + "#did-communication"))
-						.type("did-communication")
-						.serviceEndpoint(serviceEndpointUrl)
-						.build();
-				JsonLDUtils.jsonLdAddAll(service2, Map.of(
-						"priority", 0,
-						"recipientKeys", List.of(JsonLDUtils.uriToString(verificationMethodKey.getId())),
-						"routingKeys", List.of(),
-						"accept", List.of("didcomm/aip2;env=rfc19")
-				));
-
-				Service service3 = Service.builder()
-						.id(URI.create(did + "#didcomm-1"))
-						.type("DIDComm")
-						.serviceEndpoint(serviceEndpointUrl)
-						.build();
-				JsonLDUtils.jsonLdAddAll(service3, Map.of(
-						"routingKeys", List.of(),
-						"accept", List.of("didcomm/v2", "didcomm/aip2;env=rfc19")
-				));
-
-				services.add(service2);
-				services.add(service3);
-			}
-		}
-
-		// create DID DOCUMENT
-
-		DIDDocument didDocument = DIDDocument.builder()
-				.contexts(DIDDOCUMENT_CONTEXTS)
-				.id(did.toUri())
-				.verificationMethods(verificationMethods)
-				.authenticationVerificationMethod(VerificationMethod.builder().id(verificationMethodKey.getId()).build())
-				.assertionMethodVerificationMethod(VerificationMethod.builder().id(verificationMethodKey.getId()).build())
-				.keyAgreementVerificationMethod(VerificationMethod.builder().id(verificationMethodKeyAgreement.getId()).build())
-				.services(services)
-				.build();
+		if (deactivated)
+			didDocument = DidDocAssembler.assembleDeactivatedDIDDocument(did);
+		else
+			didDocument = DidDocAssembler.assembleDIDDocument(did, nymTransactionData, attribTransactionData);
 
 		// create DID DOCUMENT METADATA
 
 		Map<String, Object> didDocumentMetadata = new LinkedHashMap<> ();
+		if (deactivated) didDocumentMetadata.put("deactivated", deactivated);
 		didDocumentMetadata.put("network", indyConnection.getPoolConfigName());
 		didDocumentMetadata.put("poolVersion", indyConnection.getPoolVersion());
 		didDocumentMetadata.put("submitterDid", indyConnection.getSubmitterDid());
-		didDocumentMetadata.put("nymResponse", gson.fromJson(jsonGetNymResponse, Map.class));
-		didDocumentMetadata.put("attrResponse", gson.fromJson(jsonGetAttrResponse, Map.class));
+		if (nymTransactionData != null) didDocumentMetadata.put("nymResponse", nymTransactionData.getResponseMap());
+		if (attribTransactionData != null) didDocumentMetadata.put("attribResponse", attribTransactionData.getResponseMap());
 
 		// create RESOLVE RESULT
 

@@ -1,4 +1,4 @@
-package uniresolver.driver.did.sov.util;
+package uniresolver.driver.did.sov.crypto;
 
 import com.goterl.lazysodium.LazySodiumJava;
 import com.goterl.lazysodium.SodiumJava;

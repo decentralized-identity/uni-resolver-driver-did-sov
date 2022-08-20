@@ -38,6 +38,7 @@
 		<!-- Dependency Versions -->
 
 		<libindy-common-java.version>0.1.0</libindy-common-java.version>
+		<did-common-java.version>1.2-SNAPSHOT</did-common-java.version>
 
 		<io.leonard-base58.version>0.0.2</io.leonard-base58.version>
 		<com.goterl-lazysodium-java.version>5.1.1</com.goterl-lazysodium-java.version>
@@ -144,11 +145,6 @@
 				<version>${libindy-common-java.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.google.code.gson</groupId>
-				<artifactId>gson</artifactId>
-				<version>${gson.version}</version>
-			</dependency>
-			<dependency>
 				<groupId>io.leonard</groupId>
 				<artifactId>base58</artifactId>
 				<version>${io.leonard-base58.version}</version>
@@ -177,10 +173,6 @@
 		<dependency>
 			<groupId>com.danubetech</groupId>
 			<artifactId>libindy-common-java</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>io.leonard</groupId>
