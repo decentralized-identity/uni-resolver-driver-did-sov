@@ -187,9 +187,12 @@ public class DidSovDriver implements Driver {
 
 		// send GET_ATTR request
 
-		String getAttrResponse = null;
+		String getAttrResponse;
 
-		if (! deactivated) {
+		if (deactivated) {
+
+			getAttrResponse = null;
+		} else {
 
 			try {
 				synchronized (indyConnection) {
