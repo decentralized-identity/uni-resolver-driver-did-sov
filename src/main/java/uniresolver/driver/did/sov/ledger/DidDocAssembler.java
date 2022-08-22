@@ -71,7 +71,7 @@ public class DidDocAssembler {
         }
         if (log.isDebugEnabled()) log.debug("Service endpoints for " + did + ": " + serviceEndpoints);
 
-        List<Service> services = new ArrayList<> ();
+        List<Service> services = serviceEndpoints.isEmpty() ? null : new ArrayList<> ();
 
         for (Map.Entry<String, Object> serviceEndpoint : serviceEndpoints.entrySet()) {
 
