@@ -17,10 +17,8 @@ import uniresolver.driver.did.sov.ledger.DidDocAssembler;
 import uniresolver.driver.did.sov.ledger.TransactionData;
 import uniresolver.result.ResolveDataModelResult;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
@@ -31,11 +29,6 @@ public class DidSovDriver implements Driver {
 	private static final Logger log = LoggerFactory.getLogger(DidSovDriver.class);
 
 	public static final Pattern DID_SOV_PATTERN = Pattern.compile("^did:sov:(?:(\\w[-\\w]*(?::\\w[-\\w]*)*):)?([1-9A-HJ-NP-Za-km-z]{21,22})$");
-
-	public static final List<URI> DIDDOCUMENT_CONTEXTS = List.of(
-			URI.create("https://w3id.org/security/suites/ed25519-2018/v1"),
-			URI.create("https://w3id.org/security/suites/x25519-2019/v1")
-	);
 
 	private Map<String, Object> properties;
 
@@ -65,14 +58,12 @@ public class DidSovDriver implements Driver {
 			String env_poolVersions = System.getenv("uniresolver_driver_did_sov_poolVersions");
 			String env_walletNames = System.getenv("uniresolver_driver_did_sov_walletNames");
 			String env_submitterDidSeeds = System.getenv("uniresolver_driver_did_sov_submitterDidSeeds");
-			String env_genesisTimestamps = System.getenv("uniresolver_driver_did_sov_genesisTimestamps");
 
 			if (env_libIndyPath != null) properties.put("libIndyPath", env_libIndyPath);
 			if (env_poolConfigs != null) properties.put("poolConfigs", env_poolConfigs);
 			if (env_poolVersions != null) properties.put("poolVersions", env_poolVersions);
 			if (env_walletNames != null) properties.put("walletNames", env_walletNames);
 			if (env_submitterDidSeeds != null) properties.put("submitterDidSeeds", env_submitterDidSeeds);
-			if (env_genesisTimestamps != null) properties.put("genesisTimestamps", env_genesisTimestamps);
 		} catch (Exception ex) {
 
 			throw new IllegalArgumentException(ex.getMessage(), ex);
@@ -96,14 +87,13 @@ public class DidSovDriver implements Driver {
 			String prop_poolVersions = (String) this.getProperties().get("poolVersions");
 			String prop_walletNames = (String) this.getProperties().get("walletNames");
 			String prop_submitterDidSeeds = (String) this.getProperties().get("submitterDidSeeds");
-			String prop_genesisTimestamps = (String) this.getProperties().get("genesisTimestamps");
 
 			this.setIndyConnector(new IndyConnector(
 					prop_poolConfigs,
 					prop_poolVersions,
 					prop_walletNames,
 					prop_submitterDidSeeds,
-					prop_genesisTimestamps));
+					null));
 		} catch (Exception ex) {
 
 			throw new IllegalArgumentException(ex.getMessage(), ex);

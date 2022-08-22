@@ -5,8 +5,15 @@ MAINTAINER Markus Sabadello <markus@danubetech.com>
 
 # build driver-did-sov
 
+WORKDIR /opt/driver-did-sov
+ADD pom.xml /opt/driver-did-sov
+RUN mvn org.apache.maven.plugins:maven-dependency-plugin:3.3.0:go-offline
+ADD src/main/webapp/WEB-INF /opt/driver-did-sov/src/main/webapp/WEB-INF
+RUN mvn clean package -P war
 ADD . /opt/driver-did-sov
-RUN cd /opt/driver-did-sov && mvn clean install package -P war -N -DskipTests
+RUN mvn clean package -P war
+
+# build image
 
 FROM jetty:9.4-jre11-slim
 MAINTAINER Markus Sabadello <markus@danubetech.com>
