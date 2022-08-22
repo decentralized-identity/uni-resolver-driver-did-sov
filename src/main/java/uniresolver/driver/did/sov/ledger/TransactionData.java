@@ -14,15 +14,15 @@ public class TransactionData {
 
     private boolean found;
     private Long reqId;
-    private String seqNo;
+    private Long seqNo;
     private String type;
     private String dest;
     private Long txnTime;
     private String verkey;
-    private String raw;
+    private String rawKey;
     private Map<String, Object> rawValue;
 
-    public TransactionData(String response, Map<String, Object> responseMap, boolean found, Long reqId, String seqNo, String type, String dest, Long txnTime, String verkey, String raw, Map<String, Object> rawValue) {
+    public TransactionData(String response, Map<String, Object> responseMap, boolean found, Long reqId, Long seqNo, String type, String dest, Long txnTime, String verkey, String rawKey, Map<String, Object> rawValue) {
         this.response = response;
         this.responseMap = responseMap;
         this.found = found;
@@ -32,7 +32,7 @@ public class TransactionData {
         this.dest = dest;
         this.txnTime = txnTime;
         this.verkey = verkey;
-        this.raw = raw;
+        this.rawKey = rawKey;
         this.rawValue = rawValue;
     }
 
@@ -41,30 +41,31 @@ public class TransactionData {
         Object jsonGetTxnResult = getTxnResponseMap == null ? null : getTxnResponseMap.get("result");
         Object jsonGetTxnResultData = !(jsonGetTxnResult instanceof Map) ? null : ((Map) jsonGetTxnResult).get("data");
 
+        Object jsonGetTxnResultReqid = !(jsonGetTxnResult instanceof Map) ? null : ((Map) jsonGetTxnResult).get("reqId");
+        Object jsonGetTxnResultSeqno = !(jsonGetTxnResult instanceof Map) ? null : ((Map) jsonGetTxnResult).get("seqNo");
         Object jsonGetTxnResultDataTxn = !(jsonGetTxnResultData instanceof Map) ? null : ((Map) jsonGetTxnResultData).get("txn");
-        Object jsonGetTxnResultDataTxnType = !(jsonGetTxnResultData instanceof Map) ? null : ((Map) jsonGetTxnResultData).get("type");
+        Object jsonGetTxnResultDataTxnType = !(jsonGetTxnResultDataTxn instanceof Map) ? null : ((Map) jsonGetTxnResultDataTxn).get("type");
         Object jsonGetTxnResultDataTxnData = !(jsonGetTxnResultDataTxn instanceof Map) ? null : ((Map) jsonGetTxnResultDataTxn).get("data");
         Object jsonGetTxnResultDataTxnDataDest = !(jsonGetTxnResultDataTxnData instanceof Map) ? null : ((Map) jsonGetTxnResultDataTxnData).get("dest");
         Object jsonGetTxnResultDataTxnDataVerkey = !(jsonGetTxnResultDataTxnData instanceof Map) ? null : ((Map) jsonGetTxnResultDataTxnData).get("verkey");
-        Object jsonGetTxnResultRaw = !(jsonGetTxnResultDataTxn instanceof Map) ? null : ((Map) jsonGetTxnResultDataTxn).get("raw");
-        Object jsonGetTxnResultDataRawValue = !(jsonGetTxnResultDataTxnData instanceof Map) || !(jsonGetTxnResultRaw instanceof String) ? null : ((Map) jsonGetTxnResultDataTxnData).get(jsonGetTxnResultRaw);
-        Object jsonGetTxnResultDataTxnMetadata = !(jsonGetTxnResultDataTxn instanceof Map) ? null : ((Map) jsonGetTxnResultDataTxn).get("metadata");
-        Object jsonGetTxnResultDataTxnMetadataReqid = !(jsonGetTxnResultDataTxnMetadata instanceof Map) ? null : ((Map) jsonGetTxnResultDataTxnMetadata).get("reqId");
+        Object jsonGetTxnResultDataTxnDataRawString = !(jsonGetTxnResultDataTxnData instanceof Map) ? null : ((Map) jsonGetTxnResultDataTxnData).get("raw");
+        Object jsonGetTxnResultDataTxnDataRawObject = !(jsonGetTxnResultDataTxnDataRawString instanceof String) ? null : objectMapper.readValue((String) jsonGetTxnResultDataTxnDataRawString, Map.class);
+        Object jsonGetTxnResultDataTxnDataRawKey = !(jsonGetTxnResultDataTxnDataRawObject instanceof Map) ? null : ((Map.Entry) ((Map) jsonGetTxnResultDataTxnDataRawObject).entrySet().iterator().next()).getKey();
+        Object jsonGetTxnResultDataTxnDataRawValue = !(jsonGetTxnResultDataTxnDataRawObject instanceof Map) ? null : ((Map.Entry) ((Map) jsonGetTxnResultDataTxnDataRawObject).entrySet().iterator().next()).getValue();
         Object jsonGetTxnResultDataTxnmetadata = !(jsonGetTxnResultData instanceof Map) ? null : ((Map) jsonGetTxnResultData).get("txnMetadata");
-        Object jsonGetTxnResultDataTxnmetadataSeqno = !(jsonGetTxnResultDataTxnmetadata instanceof Map) ? null : ((Map) jsonGetTxnResultDataTxnmetadata).get("seqNo");
         Object jsonGetTxnResultDataTxnmetadataTxntime = !(jsonGetTxnResultDataTxnmetadata instanceof Map) ? null : ((Map) jsonGetTxnResultDataTxnmetadata).get("txnTime");
 
         boolean found = jsonGetTxnResultData != null;
+        Long reqId = jsonGetTxnResultReqid instanceof Number ? ((Number) jsonGetTxnResultReqid).longValue() : null;
+        Long seqNo = jsonGetTxnResultSeqno instanceof Number ? ((Number) jsonGetTxnResultSeqno).longValue() : null;
         String type = jsonGetTxnResultDataTxnType instanceof String ? (String) jsonGetTxnResultDataTxnType : null;
         String dest = jsonGetTxnResultDataTxnDataDest instanceof String ? (String) jsonGetTxnResultDataTxnDataDest : null;
         String verkey = jsonGetTxnResultDataTxnDataVerkey instanceof String ? (String) jsonGetTxnResultDataTxnDataVerkey : null;
-        String raw = jsonGetTxnResultRaw instanceof String ? (String) jsonGetTxnResultRaw : null;
-        Map<String, Object> rawValue = jsonGetTxnResultDataRawValue instanceof Map ? (Map<String, Object>) jsonGetTxnResultDataRawValue : null;
-        Long reqId = jsonGetTxnResultDataTxnMetadataReqid instanceof Number ? ((Number) jsonGetTxnResultDataTxnMetadataReqid).longValue() : null;
-        String seqNo = jsonGetTxnResultDataTxnmetadataSeqno instanceof String ? (String) jsonGetTxnResultDataTxnmetadataSeqno : null;
+        String rawKey = jsonGetTxnResultDataTxnDataRawKey instanceof String ? (String) jsonGetTxnResultDataTxnDataRawKey : null;
+        Map<String, Object> rawValue = jsonGetTxnResultDataTxnDataRawValue instanceof Map ? (Map<String, Object>) jsonGetTxnResultDataTxnDataRawValue : null;
         Long txnTime = jsonGetTxnResultDataTxnmetadataTxntime instanceof Number ? ((Number) jsonGetTxnResultDataTxnmetadataTxntime).longValue() : null;
 
-        return new TransactionData(getTxnResponse, getTxnResponseMap, found, reqId, seqNo, type, dest, txnTime, verkey, raw, rawValue);
+        return new TransactionData(getTxnResponse, getTxnResponseMap, found, reqId, seqNo, type, dest, txnTime, verkey, rawKey, rawValue);
     }
 
     private static TransactionData fromGetNymResponse(String getNymResponse, Map getNymResponseMap) throws JsonProcessingException {
@@ -82,7 +83,7 @@ public class TransactionData {
 
         boolean found = jsonGetNymResultData != null;
         Long reqId = jsonGetNymResultReqid instanceof Number ? ((Number) jsonGetNymResultReqid).longValue() : null;
-        String seqNo = jsonGetNymResultSeqno instanceof String ? (String) jsonGetNymResultSeqno : null;
+        Long seqNo = jsonGetNymResultSeqno instanceof Number ? ((Number) jsonGetNymResultSeqno).longValue() : null;
         String type = jsonGetNymResultType instanceof String ? (String) jsonGetNymResultType : null;
         String dest = jsonGetNymResultDest instanceof String ? (String) jsonGetNymResultDest : null;
         Long txnTime = jsonGetNymResultTxntime instanceof Number ? ((Number) jsonGetNymResultTxntime).longValue() : null;
@@ -103,18 +104,19 @@ public class TransactionData {
         Object jsonGetAttrResultDest = !(jsonGetAttrResult instanceof Map) ? null : ((Map) jsonGetAttrResult).get("dest");
         Object jsonGetAttrResultTxntime = !(jsonGetAttrResult instanceof Map) ? null : ((Map) jsonGetAttrResult).get("txnTime");
         Object jsonGetAttrResultRaw = !(jsonGetAttrResult instanceof Map) ? null : ((Map) jsonGetAttrResult).get("raw");
+        Object jsonGetAttrResultRawKey = jsonGetAttrResultRaw;
         Object jsonGetAttrResultDataRawValue = !(jsonGetAttrResultData instanceof Map) || !(jsonGetAttrResultRaw instanceof String) ? null : ((Map) jsonGetAttrResultData).get(jsonGetAttrResultRaw);
 
         boolean found = jsonGetAttrResultData != null;
         Long reqId = jsonGetAttrResultReqid instanceof Number ? ((Number) jsonGetAttrResultReqid).longValue() : null;
-        String seqNo = jsonGetAttrResultSeqno instanceof String ? (String) jsonGetAttrResultSeqno : null;
+        Long seqNo = jsonGetAttrResultSeqno instanceof Number ? ((Number) jsonGetAttrResultSeqno).longValue() : null;
         String type = jsonGetAttrResultType instanceof String ? (String) jsonGetAttrResultType : null;
         String dest = jsonGetAttrResultDest instanceof String ? (String) jsonGetAttrResultDest : null;
         Long txnTime = jsonGetAttrResultTxntime instanceof Number ? ((Number) jsonGetAttrResultTxntime).longValue() : null;
-        String raw = jsonGetAttrResultRaw instanceof String ? (String) jsonGetAttrResultRaw : null;
+        String rawKey = jsonGetAttrResultRawKey instanceof String ? (String) jsonGetAttrResultRawKey : null;
         Map<String, Object> rawValue = jsonGetAttrResultDataRawValue instanceof Map ? (Map<String, Object>) jsonGetAttrResultDataRawValue : null;
 
-        return new TransactionData(getAttrRespnse, getAttrResponseMap, found, reqId, seqNo, type, dest, txnTime, null, raw, rawValue);
+        return new TransactionData(getAttrRespnse, getAttrResponseMap, found, reqId, seqNo, type, dest, txnTime, null, rawKey, rawValue);
   }
 
     public static TransactionData fromGetTxnResponse(String getTxnResponse) {
@@ -188,7 +190,7 @@ public class TransactionData {
     }
 
     public boolean isCompleteForAttrib() {
-        return this.getRaw() != null;
+        return this.getRawKey() != null;
     }
 
     /*
@@ -227,11 +229,11 @@ public class TransactionData {
         this.reqId = reqId;
     }
 
-    public String getSeqNo() {
+    public Long getSeqNo() {
         return seqNo;
     }
 
-    public void setSeqNo(String seqNo) {
+    public void setSeqNo(Long seqNo) {
         this.seqNo = seqNo;
     }
 
@@ -267,12 +269,12 @@ public class TransactionData {
         this.verkey = verkey;
     }
 
-    public String getRaw() {
-        return raw;
+    public String getRawKey() {
+        return rawKey;
     }
 
-    public void setRaw(String raw) {
-        this.raw = raw;
+    public void setRawKey(String rawKey) {
+        this.rawKey = rawKey;
     }
 
     public Map<String, Object> getRawValue() {
@@ -297,7 +299,7 @@ public class TransactionData {
                 ", dest='" + dest + '\'' +
                 ", txnTime=" + txnTime +
                 ", verkey='" + verkey + '\'' +
-                ", raw='" + raw + '\'' +
+                ", rawKey='" + rawKey + '\'' +
                 ", rawValue=" + rawValue +
                 '}';
     }
