@@ -66,10 +66,10 @@ public class DidDocAssembler {
 
         Map<String, Object> serviceEndpoints;
 
-        if (attribTransactionData == null || attribTransactionData.getRawValue() == null) {
-            serviceEndpoints = Collections.emptyMap();
-        } else {
+        if (attribTransactionData != null && "endpoint".equals(attribTransactionData.getRawKey()) && attribTransactionData.getRawValue() != null) {
             serviceEndpoints = attribTransactionData.getRawValue();
+        } else {
+            serviceEndpoints = Collections.emptyMap();
         }
         if (log.isDebugEnabled()) log.debug("Service endpoints for " + did + ": " + serviceEndpoints);
 
