@@ -37,7 +37,7 @@
 
 		<!-- Dependency Versions -->
 
-		<libindy-common-java.version>0.1.0</libindy-common-java.version>
+		<libindy-common-java.version>0.3.0</libindy-common-java.version>
 		<did-common-java.version>1.2.0</did-common-java.version>
 
 		<io.leonard-base58.version>0.0.2</io.leonard-base58.version>
