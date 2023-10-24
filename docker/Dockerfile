@@ -1,6 +1,6 @@
 # Dockerfile for universalresolver/driver-did-sov
 
-FROM maven:3-jdk-11 AS build
+FROM maven:3-openjdk-17-slim AS build
 MAINTAINER Markus Sabadello <markus@danubetech.com>
 
 # build driver-did-sov
@@ -15,7 +15,7 @@ RUN mvn clean package -P war
 
 # build image
 
-FROM jetty:9.4-jre11-slim
+FROM jetty:9.4.53-jre17-eclipse-temurin
 MAINTAINER Markus Sabadello <markus@danubetech.com>
 
 # install dependencies
@@ -24,6 +24,8 @@ USER root
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get -y update && \
+    wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.0g-2ubuntu4_amd64.deb && \
+    dpkg -i libssl1.1_1.1.0g-2ubuntu4_amd64.deb && \
     apt-get install -y --no-install-recommends software-properties-common gnupg && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 68DB5E88 && \
     add-apt-repository "deb https://repo.sovrin.org/sdk/deb bionic stable" && \
