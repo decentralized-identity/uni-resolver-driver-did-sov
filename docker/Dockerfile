@@ -15,7 +15,7 @@ RUN mvn clean package -P war
 
 # build image
 
-FROM jetty:12.0.2-jre17-eclipse-temurin
+FROM jetty:11.0.17-jre17-eclipse-temurin
 MAINTAINER Markus Sabadello <markus@danubetech.com>
 
 # install dependencies
