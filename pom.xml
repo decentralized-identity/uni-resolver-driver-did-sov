@@ -73,11 +73,12 @@
 					<plugin>
 						<groupId>org.eclipse.jetty</groupId>
 						<artifactId>jetty-maven-plugin</artifactId>
+						<version>11.0.18</version>
 						<configuration>
-							<jettyConfig>
+							<jettyXmls>
 								${basedir}/src/test/resources/jetty.xml
-							</jettyConfig>
-							<useTestClasspath>true</useTestClasspath>
+							</jettyXmls>
+							<useTestScope>true</useTestScope>
 							<systemProperties>
 								<systemProperty>
 									<name>jetty.port</name>
