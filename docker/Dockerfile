@@ -38,10 +38,10 @@ USER jetty
 # variables
 
 ENV uniresolver_driver_did_sov_libIndyPath=
-ENV uniresolver_driver_did_sov_poolConfigs=_;./sovrin/_.txn;staging;./sovrin/staging.txn;builder;./sovrin/builder.txn;danube;./sovrin/danube.txn;idunion;./sovrin/idunion.txn;idunion:test;./sovrin/idunion-test.txn;indicio;./sovrin/indicio.txn;indicio:test;./sovrin/indicio-test.txn;indicio:demo;./sovrin/indicio-demo.txn;bbu;./sovrin/bbu.txn;nxd;./sovrin/nxd.txn;findy:test;./sovrin/findy-test.txn
-ENV uniresolver_driver_did_sov_poolVersions=_;2;staging;2;builder;2;danube;2;idunion;2;idunion:test;2;indicio;2;indicio:test;2;indicio:demo;2;bbu;2;nxd;2;findy:test;2
-ENV uniresolver_driver_did_sov_walletNames=_;w1;staging;w2;builder;w3;danube;w4;idunion;w5;idunion:test;w6;indicio;w7;indicio:test;w8;indicio:demo;w9;bbu;w10;nxd;w11;findy:test;w12
-ENV uniresolver_driver_did_sov_submitterDidSeeds=_;_;staging;_;builder;_;danube;_;idunion;_;idunion:test;_;indicio;_;indicio:test;_;indicio:demo;_;bbu;_;nxd;_;findy:test;_
+ENV uniresolver_driver_did_sov_poolConfigs=_;./sovrin/_.txn;staging;./sovrin/staging.txn;builder;./sovrin/builder.txn;danube;./sovrin/danube.txn;idunion;./sovrin/idunion.txn;idunion:test;./sovrin/idunion-test.txn;indicio;./sovrin/indicio.txn;indicio:test;./sovrin/indicio-test.txn;indicio:demo;./sovrin/indicio-demo.txn;nxd;./sovrin/nxd.txn;findy:test;./sovrin/findy-test.txn
+ENV uniresolver_driver_did_sov_poolVersions=_;2;staging;2;builder;2;danube;2;idunion;2;idunion:test;2;indicio;2;indicio:test;2;indicio:demo;2;nxd;2;findy:test;2
+ENV uniresolver_driver_did_sov_walletNames=_;w1;staging;w2;builder;w3;danube;w4;idunion;w5;idunion:test;w6;indicio;w7;indicio:test;w8;indicio:demo;w9;nxd;w11;findy:test;w12
+ENV uniresolver_driver_did_sov_submitterDidSeeds=_;_;staging;_;builder;_;danube;_;idunion;_;idunion:test;_;indicio;_;indicio:test;_;indicio:demo;_;nxd;_;findy:test;_
 
 # copy from build stage
 
