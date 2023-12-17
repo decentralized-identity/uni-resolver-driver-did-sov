@@ -41,7 +41,7 @@ ENV uniresolver_driver_did_sov_libIndyPath=
 ENV uniresolver_driver_did_sov_poolConfigs=_;./sovrin/_.txn;test;./sovrin/test.txn;builder;./sovrin/builder.txn;danube;./sovrin/danube.txn;idunion;./sovrin/idunion.txn;idunion:test;./sovrin/idunion-test.txn;indicio;./sovrin/indicio.txn;indicio:test;./sovrin/indicio-test.txn;indicio:demo;./sovrin/indicio-demo.txn;nxd;./sovrin/nxd.txn;findy:test;./sovrin/findy-test.txn;bcovrin;./sovrin/bcovrin.txn;bcovrin:test;./sovrin/bcovrin-test.txn;bcovrin:dev;./sovrin/bcovrin-dev.txn;candy;./sovrin/candy.txn;candy:test;./sovrin/candy-test.txn;candy:dev;./sovrin/candy-dev.txn
 ENV uniresolver_driver_did_sov_poolVersions=_;2;test;2;builder;2;danube;2;idunion;2;idunion:test;2;indicio;2;indicio:test;2;indicio:demo;2;nxd;2;findy:test;2;bcovrin;2;bcovrin:test;2;bcovrin:dev;2;candy;2;candy:test;2;candy:dev;2
 ENV uniresolver_driver_did_sov_walletNames=_;w1;test;w2;builder;w3;danube;w4;idunion;w5;idunion:test;w6;indicio;w7;indicio:test;w8;indicio:demo;w9;nxd;w11;findy:test;w12;bcovrin;w13;bcovrin:test;w14;bcovrin:dev;w15;candy;w16;candy:test;w17;candy:dev;w18
-ENV uniresolver_driver_did_sov_submitterDidSeeds=_;_;test;_;builder;_;danube;_;idunion;_;idunion:test;_;indicio;_;indicio:test;_;indicio:demo;_;nxd;_;findy:test;_;bcovrin;_;bcovrin:test;_;bcovrin:dev;candy;_;candy:test;_;candy:dev;_
+ENV uniresolver_driver_did_sov_submitterDidSeeds=_;_;test;_;builder;_;danube;_;idunion;_;idunion:test;_;indicio;_;indicio:test;_;indicio:demo;_;nxd;_;findy:test;_;bcovrin;_;bcovrin:test;_;bcovrin:dev;_;candy;_;candy:test;_;candy:dev;_
 
 # copy from build stage
 
