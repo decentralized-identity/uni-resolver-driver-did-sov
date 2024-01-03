@@ -33,6 +33,7 @@ public class DidSovDriver implements Driver {
 	private Map<String, Object> properties;
 
 	private LibIndyInitializer libIndyInitializer;
+	private boolean openParallel;
 	private IndyConnector indyConnector;
 
 	public DidSovDriver(Map<String, Object> properties) {
@@ -54,12 +55,14 @@ public class DidSovDriver implements Driver {
 		try {
 
 			String env_libIndyPath = System.getenv("uniresolver_driver_did_sov_libIndyPath");
+			String env_openParallel = System.getenv("uniresolver_driver_did_sov_openParallel");
 			String env_poolConfigs = System.getenv("uniresolver_driver_did_sov_poolConfigs");
 			String env_poolVersions = System.getenv("uniresolver_driver_did_sov_poolVersions");
 			String env_walletNames = System.getenv("uniresolver_driver_did_sov_walletNames");
 			String env_submitterDidSeeds = System.getenv("uniresolver_driver_did_sov_submitterDidSeeds");
 
 			if (env_libIndyPath != null) properties.put("libIndyPath", env_libIndyPath);
+			if (env_openParallel != null) properties.put("openParallel", env_openParallel);
 			if (env_poolConfigs != null) properties.put("poolConfigs", env_poolConfigs);
 			if (env_poolVersions != null) properties.put("poolVersions", env_poolVersions);
 			if (env_walletNames != null) properties.put("walletNames", env_walletNames);
@@ -79,9 +82,12 @@ public class DidSovDriver implements Driver {
 		try {
 
 			String prop_libIndyPath = (String) this.getProperties().get("libIndyPath");
+			String prop_openParallel = (String) this.getProperties().get("openParallel");
 
 			this.setLibIndyInitializer(new LibIndyInitializer(
 					prop_libIndyPath));
+
+			this.setOpenParallel(Boolean.parseBoolean(prop_openParallel));
 
 			String prop_poolConfigs = (String) this.getProperties().get("poolConfigs");
 			String prop_poolVersions = (String) this.getProperties().get("poolVersions");
@@ -114,7 +120,7 @@ public class DidSovDriver implements Driver {
 
 		if (! this.getIndyConnector().isOpened()) {
 			try {
-				this.getIndyConnector().openIndyConnections(true, false);
+				this.getIndyConnector().openIndyConnections(true, false, this.getOpenParallel());
 				if (log.isInfoEnabled()) log.info("Successfully opened Indy connections.");
 			} catch (IndyConnectionException ex) {
 				throw new ResolutionException("Cannot open Indy connections: " + ex.getMessage(), ex);
@@ -253,6 +259,14 @@ public class DidSovDriver implements Driver {
 
 	public void setLibIndyInitializer(LibIndyInitializer libIndyInitializer) {
 		this.libIndyInitializer = libIndyInitializer;
+	}
+
+	public boolean getOpenParallel() {
+		return openParallel;
+	}
+
+	public void setOpenParallel(boolean openParallel) {
+		this.openParallel = openParallel;
 	}
 
 	public IndyConnector getIndyConnector() {

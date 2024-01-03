@@ -39,6 +39,11 @@ The driver recognizes the following environment variables:
  * Specifies the path to the Indy SDK library.
  * Default value: (empty string)
 
+### `uniresolver_driver_did_sov_openParallel`
+
+* Specifies whether to open Indy pools in parallel threads. This speeds up startup, but may consume more memory.
+* Default value: false
+
 ### `uniresolver_driver_did_sov_poolConfigs`
 
  * Specifies a semi-colon-separated list of Indy network names and pool configuration files. The default network is `_`.
