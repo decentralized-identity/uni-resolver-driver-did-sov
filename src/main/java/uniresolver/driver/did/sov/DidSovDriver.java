@@ -36,14 +36,42 @@ public class DidSovDriver implements Driver {
 	private boolean openParallel;
 	private IndyConnector indyConnector;
 
-	public DidSovDriver(Map<String, Object> properties) {
+	public DidSovDriver(LibIndyInitializer libIndyInitializer, boolean openParallel, IndyConnector indyConnector) throws IndyConnectionException{
 
-		this.setProperties(properties);
+		this.setLibIndyInitializer(libIndyInitializer);
+		this.setOpenParallel(openParallel);
+		this.setIndyConnector(indyConnector);
+
+		this.initializeIndy();
 	}
 
-	public DidSovDriver() {
+	public DidSovDriver(Map<String, Object> properties) throws IndyConnectionException{
+
+		this.setProperties(properties);
+
+		this.initializeIndy();
+	}
+
+	public DidSovDriver() throws IndyConnectionException {
 
 		this(getPropertiesFromEnvironment());
+	}
+
+	private void initializeIndy() throws IndyConnectionException {
+
+		// init libindy
+
+		if (this.getLibIndyInitializer() != null && ! this.getLibIndyInitializer().isInitialized()) {
+			this.getLibIndyInitializer().initializeLibIndy();
+			if (log.isInfoEnabled()) log.info("Successfully initialized libindy.");
+		}
+
+		// open indy connections
+
+		if (this.getIndyConnector() != null && ! this.getIndyConnector().isOpened()) {
+			this.getIndyConnector().openIndyConnections(true, false, this.getOpenParallel());
+			if (log.isInfoEnabled()) log.info("Successfully opened Indy connections.");
+		}
 	}
 
 	private static Map<String, Object> getPropertiesFromEnvironment() {
@@ -109,22 +137,10 @@ public class DidSovDriver implements Driver {
 	@Override
 	public ResolveDataModelResult resolve(DID did, Map<String, Object> resolveOptions) throws ResolutionException {
 
-		// init
-
-		if (!this.getLibIndyInitializer().isInitialized()) {
-			this.getLibIndyInitializer().initializeLibIndy();
-			if (log.isInfoEnabled()) log.info("Successfully initialized libindy.");
-		}
-
-		// open indy connections
+		// check if Indy connections are open
 
 		if (! this.getIndyConnector().isOpened()) {
-			try {
-				this.getIndyConnector().openIndyConnections(true, false, this.getOpenParallel());
-				if (log.isInfoEnabled()) log.info("Successfully opened Indy connections.");
-			} catch (IndyConnectionException ex) {
-				throw new ResolutionException("Cannot open Indy connections: " + ex.getMessage(), ex);
-			}
+			throw new ResolutionException("Indy connections are not opened");
 		}
 
 		// parse identifier
