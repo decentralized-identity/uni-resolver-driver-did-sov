@@ -13,7 +13,7 @@ on:
 jobs:
 
   docker-release:
-    uses: danubetech/workflows/.github/workflows/docker-latest.yml@main
+    uses: danubetech/workflows/.github/workflows/docker-latest.yml@1.2.0
     with:
       GLOBAL_IMAGE_NAME: universalresolver/driver-did-sov
       GLOBAL_REPO_NAME: docker.io
