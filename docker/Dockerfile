@@ -22,15 +22,13 @@ MAINTAINER Markus Sabadello <markus@danubetech.com>
 
 USER root
 
+ADD ./lib/ /opt/lib
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get -y update && \
-    wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb && \
-    dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb && \
-    apt-get install -y --no-install-recommends software-properties-common gnupg && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 68DB5E88 && \
-    add-apt-repository "deb https://repo.sovrin.org/sdk/deb bionic stable" && \
+    apt-get install -y --no-install-recommends software-properties-common gnupg libsodium23 libzmq5 && \
     apt-get -y update && \
-    apt-get install -y libindy=1.16.0-bionic && \
+    dpkg -i /opt/lib/libssl1.1_1.1.1f-1ubuntu2_amd64.deb && \
+    dpkg -i /opt/lib/libindy_1.16.0-bionic_amd64.deb && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 USER jetty
